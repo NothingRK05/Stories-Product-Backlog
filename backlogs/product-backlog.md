@@ -25,12 +25,11 @@ permalink: /backlogs/product-backlog/
 | ST-015 | As a scrum team, We want to provide "credits" to be able to include ourselves in the product. | 6 | 1 | N | -- | All |
 | ST-016 | As a Developer, I want to create an about page so that i can provide information about the product and developers. | 6 | 2 | Y | -- | All |
 | ST-017 | As a scrum team, We want to schedule support for the capstone team's celebration of scholarship lite upcoming events. | 4 | 1 | N | -- | All |
-As a user, I want to be able to create a new user story, priority, estimate, spike, status, and assignment
 | ST-018 | As a user, I want to be able to create a new user story by providing an ID, priority, estimate, spike, status, assignment, and description. | 8 | 1 | Y | -- | All |
 | ST-019 | As a developer, I want to make a database to be able to store and easily receive user stories when requested. | 9 | 1 | N | -- | All |
 | ST-020 | As a developer, I want to create a interface for a product backlog and a sprint backlog. | 9 | 1 | N | -- | All |
 | ST-021 | As a user, I want to move stories from my product backlog to my sprint backlog. | 9 | 1 | N | -- | All |
 | ST-022 | As a user, I want to be able to sort by different categories; ID, priority, Spike vs not spike, ready vs not ready, estimation, and the developer. | 9 | 1 | N | -- | All |
-As a user, I want to be able to create different projects so I can have project specific product and sprint backlogs
 | ST-023 | As a user, I want to be able to create different projects so I can have project specific product and sprint backlogs. | 9 | 1 | N | -- | All |
-| ST-024 | As a developer, I want to create a way for users to be able to export their product and sprint backlogs to pdfs | 9 | 1 | N | -- | All |
+| ST-024 | As a developer, I want to create a way for users to be able to export their product and sprint backlogs to pdfs. | 9 | 1 | N | -- | All |
+| ST-025 | As a developer, I want to create a database for user logins so users can keep track of only their projects and backlogs. | 9 | 1 | N | -- | All |
