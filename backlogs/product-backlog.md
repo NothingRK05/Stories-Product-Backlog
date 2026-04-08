@@ -4,7 +4,7 @@ title: Product Backlog
 permalink: /backlogs/product-backlog/
 ---
 
-# 📋 Product Backlog – *Insurance Risk Calculator*
+# 📋 Product Backlog – *Stories*
 
 | **ID** | **User Story / Task** | **Priority (1-10)** | **Estimate (SP)** | **Spike (Y/N)** | **Status** | **Assigned** |
 |--------|------------------------|----------------------|-------------------|-----------------|------------|--------------|
