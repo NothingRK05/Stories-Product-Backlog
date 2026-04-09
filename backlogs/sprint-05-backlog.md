@@ -26,7 +26,7 @@ Sprint 4 Backlog:
 | ST-026 | As a Scrum team member, I want to figure out our teams Capacity, Commitment, Effort and Delivered Metrics. | 9 | 1 | N | Ready | Angelo |
 | ST-020 | As a developer, I want to create a interface for a product backlog and a sprint backlog. | 9 | 2 | Y | Not Ready | Angelo |
 | ST-018 | As a user, I want to be able to create a new user story by providing an ID, priority, estimate, spike, status, assignment, and description. | 8 | 2 | Y | Not Ready | Bobby |
-| ST-014 | As a developer, I want to implement development, test, and production CI/CD for the product. | 8 | 1 | N | Ready | Ricardo |
+| ST-014 | As a developer, I want to implement development, test, and production CI/CD for the product. | 8 | 1 | N | Done | Ricardo |
 | ST-006 | As a user, I want a clean and welcoming home screen with instructions so that I can quickly understand how to use the application. | 7 | 2 | N | Not Ready | Bryce |
 | ST-019 | As a developer, I want to make a database to be able to store and easily receive user stories when requested. | 7 | 2 | N | Not Ready | Angelo |
 | ST-016 | As a Developer, I want to create an about page so that i can provide information about the product and developers. | 6 | 1 | Y | Not Ready | Bobby |
