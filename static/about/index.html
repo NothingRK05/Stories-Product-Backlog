@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>About Me</title>
+</head>
+<body>
+
+    <header class="header">
+        <h1 class="logo">Stories</h1>
+
+        <label class="theme-switch">
+        <input type="checkbox" id="themeToggle" checked />
+        <span class="slider">
+            <span class="icon moon">🌙</span>
+            <span class="icon sun">☀️</span>
+        </span>
+        </label>
+    </header>
+
+    <div class="container">
+        <h2 class="title">About Me</h2>
+    </div>
+
+    <div class="info-box">
+        <h3>About</h3>
+        <p>
+            Stories is meant to better track your Scrum Team's user Stories and help organize you product and sprint backlogs. This website allows you to create new 
+            projects and Stories to add to your product backlog, which you can then move to your sprint backlog. You will be able to input the story ID, priority, 
+            story point estimate, spike identifier, and who the story is assigned to within the site and it will be added to your product backlog automatically. You will 
+            then be able to move these Stories to the sprint backlog when your team is ready to do so. 
+        </p>
+    </div>
+</body>
+<script>
+  const toggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+
+  toggle.addEventListener('change', () => {
+    if (toggle.checked) {
+      html.setAttribute('data-theme', 'dark');
+    } else {
+      html.setAttribute('data-theme', 'light');
+    }
+  });
+</script>

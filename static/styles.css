@@ -175,6 +175,12 @@ input:checked + .slider:before {
   line-height: 1.6;
 }
 
+.info-box a {
+  color: #8f7bff;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
 .info-box:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 18px rgba(106, 90, 205, 0.35);

@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Sprint 4 Backlog
-permalink: /backlogs/sprint-04-backlog/
+title: Sprint 5 Backlog
+permalink: /backlogs/sprint-05-backlog/
 ---
 
 # 📋 Sprint 05 Backlog – *Stories*
@@ -10,11 +10,11 @@ Scrum Master: Bryce
 
 Product Owner: Ricardo
 
-Sprint 4 Planning Date/Time: 4/7
+Sprint 5 Planning Date/Time: 4/7
 
-Sprint 4 Planning Participants: Ricardo, Bobby, Bryce, Angelo
+Sprint 5 Planning Participants: Ricardo, Bobby, Bryce, Angelo
 
-Sprint 4 Backlog:
+Sprint 5 Backlog:
 
 | **ID** | **User Story / Task** | **Priority (1-10)** | **Estimate (SP)** | **Spike (Y/N)** | **Status** | **Assigned** |
 |--------|------------------------|--------------|--------------|------------|--------------|--------------|
@@ -29,7 +29,7 @@ Sprint 4 Backlog:
 | ST-014 | As a developer, I want to implement development, test, and production CI/CD for the product. | 8 | 1 | N | Done | Ricardo |
 | ST-006 | As a user, I want a clean and welcoming home screen with instructions so that I can quickly understand how to use the application. | 7 | 2 | N | Not Ready | Bryce |
 | ST-019 | As a developer, I want to make a database to be able to store and easily receive user stories when requested. | 7 | 2 | N | Not Ready | Angelo |
-| ST-016 | As a Developer, I want to create an about page so that i can provide information about the product and developers. | 6 | 1 | Y | Not Ready | Bobby |
+| ST-016 | As a Developer, I want to create an about page so that i can provide information about the product and developers. | 6 | 1 | Y | Done | Bobby |
 | ST-015 | As a scrum team, We want to provide "credits" to be able to include ourselves in the product. | 6 | 1 | N | Ready | Angelo |
 | ST-010 | As a developer, I want to deploy the client as an Firebase static website so that I can provide users with a fast and accessible frontend. | 5 | 1 | Y | Ready | Ricardo |
 | ST-012 | As a developer, I want to remove all unnecessary code from the Node.js servers so that I can improve maintainability and performance. | 4 | 2 | Y | Ready | Bobby |
