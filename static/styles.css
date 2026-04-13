@@ -175,10 +175,63 @@ input:checked + .slider:before {
   line-height: 1.6;
 }
 
+.info-box a {
+  color: #8f7bff;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
 .info-box:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 18px rgba(106, 90, 205, 0.35);
   border-color: #8f7bff;
+}
+
+.selection-box {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 30px;
+  margin-top: 40px;
+  width: 350px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.selection-box h3 {
+  margin-top: 0;
+  font-size: 26px;
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: #8f7bff;
+}
+
+.selection-box label {
+  display: block;
+  margin-top: 17px;
+  font-weight: bold;
+}
+
+.selection-box input, select{
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px solid #888;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #8f7bff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.selection-box button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: #8f7bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 /* ---------- Light mode -----------*/
