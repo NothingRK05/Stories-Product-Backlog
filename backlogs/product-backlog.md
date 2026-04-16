@@ -10,7 +10,8 @@ permalink: /backlogs/product-backlog/
 |--------|------------------------|----------------------|-------------------|-----------------|------------|--------------|
 | ST-001 | As a Scrum Team, we want to identify the Sprint 6 Scrum Master and Product Owner so that I can ensure team responsibilities are clearly defined for the sprint. | 10 | 0 | Y | Ready | -- |
 | ST-002 | As a Scrum Master, I want to facilitate Sprint Planning and story commitment so that I can help the team work with focus and alignment. | 10 | 1 | Y | Ready | -- |
-| ST-020 | As a developer, I want to create a interface for a product backlog and a sprint backlog. | 9 | 2 | N | -- | -- |
+| ST-020 | As a user, I want a welcoming, easy to navigate, and clean looking webpage for my product backlog. | 9 | 2 | N | -- | -- |
+| ST-020 | As a user, I want a welcoming, easy to navigate, and clean looking webpage for my sprint backlog. | 9 | 2 | N | -- | -- |
 | ST-022 | As a user, I want to be able to sort by different categories; ID, priority, Spike vs not spike, ready vs not ready, estimation, and the developer. | 9 | 1 | N | -- | -- |
 | ST-023 | As a user, I want to be able to create different projects so I can have project specific product and sprint backlogs. | 9 | 1 | N | -- | -- |
 | ST-029 | As a user, I want a page for my product backlog where I can add, view, and modify my user stories | 8 | 2 | N | -- | -- |
