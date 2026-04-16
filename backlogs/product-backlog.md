@@ -31,6 +31,8 @@ permalink: /backlogs/product-backlog/
 | ST-007 | As a client, I want to call a “ping” API to wake the servers on load, ensuring the backend is responsive when needed. | 5 | 2 | N | -- | -- |
 | ST-009 | As a developer, I want to configure local `.env` or config files for seamless local testing so that I can develop without environment conflicts. (fix) | 5 | 2 | N | -- | -- 
 | ST-003 | As a Product Owner, I want to manage the backlogs and focus on the Minimum Viable Product (MVP) and prioritize stories so that I can deliver value to users by the end of the sprint. | 4 | 2 | Y | -- | -- |
+| ST-036 | As a user, I want a welcoming, easy to navigate, and clean looking webpage for my metrics page. | 4 | 2 | N | -- | -- |
+| ST-037 | As a user, I want to be able to view my sprint metrics. | 4 | 2 | N | -- | -- |
 | ST-011 | As a user, I want a visually appealing application that utilizes React to style the interface, allowing me to enjoy a modern and visually pleasing experience. | 3 | 5 | N | -- | -- |
 
 
