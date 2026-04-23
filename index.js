@@ -1,8 +1,8 @@
 const express = require('express');
-app = express();
+const app     = express();
+const cors    = require("cors");
 
-const cors = require("cors");
-
+app.use(express.json());
 app.use(express.static(__dirname + '/static'));
 app.use(cors({ origin: '*' }));
 
