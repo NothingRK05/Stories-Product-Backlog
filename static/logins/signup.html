@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Sign Up | Stories</title>
+</head>
+
+<body>
+
+    <header class="header">
+        <a href="/" class="logo">Stories</a>
+    
+        <div class="nav-right" id="authArea"></div>
+    
+        <label class="theme-switch">
+            <input type="checkbox" id="themeToggle" checked />
+            <span class="slider">
+                <span class="icon moon">🌙</span>
+                <span class="icon sun">☀️</span>
+            </span>
+        </label>
+    </header>
+
+    <div class="auth-page-container">
+        <h2 class="auth-page-title">Create an Account</h2>
+
+        <form>
+            <input id="signupName" type="text" class="auth-input" placeholder="Full Name" required />
+            <input id="signupEmail" type="email" class="auth-input" placeholder="Email" required />
+            <input id="signupPassword" type="password" class="auth-input" placeholder="Password" required />
+
+
+            <button type="submit" class="auth-submit">Sign Up</button>
+        </form>
+
+        <a href="/logins/login.html" class="auth-switch">Already have an account? Login</a>
+        <a href="/" class="auth-switch">Back to Home</a>
+    </div>
+
+    <script>
+        const toggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        toggle.addEventListener('change', () => {
+            html.setAttribute('data-theme', toggle.checked ? 'dark' : 'light');
+        });
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    
+    <script src="../js/firebase.js"></script>
+    <script src="../js/auth-state.js"></script>
+    <script src="../js/auth-signup.js"></script>
+
+</body>
+
+</html>

@@ -21,6 +21,28 @@ body {
   box-sizing: border-box;
   border-bottom: 2px solid #6a5acd;
 }
+/* Buttons in the header */
+.nav-btn {
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  background: #6a5acd;
+  color: white;
+  transition: background 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #7d6dff;
+}
+
+.nav-btn.signup {
+  background: #8f7bff;
+}
+
+.nav-btn.signup:hover {
+  background: #a08cff;
+}
 
 .logo {
   margin: 0;
@@ -467,4 +489,75 @@ html[data-theme="light"] .delete-modal p {
   display: flex;
   justify-content: center;
   margin: 30px 0 10px;
+}
+
+/* ---------- Auth Pages ---------- */
+
+.auth-page-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 120px auto;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 35px 40px;
+  border-radius: 12px;
+  border: 1px solid #6a5acd;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+html[data-theme="light"] .auth-page-container {
+  background: #fff;
+}
+
+.auth-page-title {
+  font-size: 32px;
+  margin-bottom: 25px;
+  color: #8f7bff;
+  font-weight: bold;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 6px;
+  border: 1px solid #888;
+  background: rgba(255, 255, 255, 0.05);
+  color: #8f7bff;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+html[data-theme="light"] .auth-input {
+  background: #f2f2f2;
+  color: #6a5acd;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background: #6a5acd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.auth-submit:hover {
+  background: #8f7bff;
+}
+
+.auth-switch {
+  margin-top: 18px;
+  display: block;
+  color: #8f7bff;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.auth-switch:hover {
+  text-decoration: underline;
 }
