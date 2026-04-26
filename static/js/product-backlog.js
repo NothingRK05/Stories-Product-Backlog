@@ -151,6 +151,29 @@ async function loadStories(uid) {
   });
 }
 
+async function moveStoryToSprintBacklog(uid, storyId) {
+  const sourceRef = doc(db, `users/${uid}/product-backlog/${storyId}`);
+  const targetRef = doc(db, `users/${uid}/sprint-backlog/${storyId}`);
+
+  const snap = await getDoc(sourceRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+
+  // 1. Write to sprint backlog
+  await setDoc(targetRef, {
+    ...data,
+    movedAt: Date.now()
+  });
+
+  // 2. Remove from product backlog
+  await deleteDoc(sourceRef);
+
+  // 3. Refresh UI
+  loadStories(uid);
+}
+
+
 document.addEventListener("click", e => {
   if (!e.target.classList.contains("menu-btn")) {
     document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.add("hidden"));
@@ -206,8 +229,11 @@ document.addEventListener("click", async e => {
   }
 });
 
-document.addEventListener("click", e => {
+document.addEventListener("click", async e => {
   if (e.target.classList.contains("move-item")) {
-    alert("Move to Sprint Backlog will be implemented later.");
+    const storyId = e.target.dataset.id;
+    const user = auth.currentUser;
+
+    await moveStoryToSprintBacklog(user.uid, storyId);
   }
 });
