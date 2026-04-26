@@ -15,7 +15,7 @@ const firebaseConfig = {
   messagingSenderId: "95187761797",
   appId: "1:95187761797:web:bf377dc3852526bf7187ec",
   measurementId: "G-7PBGNCC6K9"
- };
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -66,3 +66,46 @@ async function loadSprintStories(uid) {
     storyList.appendChild(box);
   });
 }
+
+/* --- MENU TOGGLE --- */
+document.addEventListener("click", e => {
+  if (!e.target.classList.contains("menu-btn")) {
+    document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.add("hidden"));
+  }
+  if (e.target.classList.contains("menu-btn")) {
+    const dropdown = e.target.nextElementSibling;
+    if (dropdown) {
+      dropdown.classList.toggle("hidden");
+    }
+  }
+});
+
+/* --- DELETE FROM SPRINT BACKLOG --- */
+document.addEventListener("click", async e => {
+  if (e.target.classList.contains("delete-item")) {
+    const storyId = e.target.dataset.id;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    await deleteDoc(doc(db, `users/${user.uid}/sprint-backlog/${storyId}`));
+    loadSprintStories(user.uid);
+  }
+});
+
+/* --- MARK AS READY (just updates status for now) --- */
+document.addEventListener("click", async e => {
+  if (e.target.classList.contains("mark-as-ready")) {
+    const storyId = e.target.dataset.id;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const ref = doc(db, `users/${user.uid}/sprint-backlog/${storyId}`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    await setDoc(ref, { ...data, status: "Ready", updatedAt: Date.now() });
+
+    loadSprintStories(user.uid);
+  }
+});
