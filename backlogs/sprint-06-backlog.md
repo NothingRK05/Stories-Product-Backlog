@@ -33,4 +33,4 @@ Sprint 6 Backlog:
 | ST-021 | As a user, I want to move stories from my product backlog to my sprint backlog. | 7 | 3 | N | Ready | Bobby |
 | ST-015 | As a scrum team, We want to provide "credits" to be able to include ourselves in the product. | 6 | 1 | N | Ready | Angelo |
 | ST-009 | As a developer, I want to configure local `.env` or config files for seamless local testing so that I can develop without environment conflicts. (fix) | 5 | 2 | N | Not Ready | Bryce |
-| ST-037 | As a user, I want to be able to view my sprint metrics. | 4 | 2 | N | Not Ready | Angelo |
+| ST-037 | As a user, I want to be able to view my sprint metrics. | 4 | 2 | N | Ready | Angelo |
