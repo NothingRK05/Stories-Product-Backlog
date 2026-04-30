@@ -8,6 +8,8 @@ permalink: /backlogs/product-backlog/
 
 | **ID** | **User Story / Task** | **Priority (1-10)** | **Estimate (SP)** | **Spike (Y/N)** | **Status** | **Assigned** |
 |--------|------------------------|----------------------|-------------------|-----------------|------------|--------------|
+| ST-051 | I want to verify and commit to delivering my Class Product Presentation on Thursday, May 14 from 8 AM to 10 AM CT | 10 | 1 | Y | -- | -- |
+| ST-052 | I want to prepare for my Class Product Presentation | 10 | 1 | Y | -- | -- |
 | ST-022 | As a user, I want to be able to sort by different categories; ID, priority, Spike vs not spike, ready vs not ready, estimation, and the developer. | 9 | 3 | N | -- | -- |
 | ST-041 | As a user, I want to give other users access to my projects so they can edit it. | 9 | 2 | N | -- | -- |
 | ST-043 | As a developer, I want to give brief comment declarations for what our program does to help future developers. | 9 | 2 | Y | -- | -- |
