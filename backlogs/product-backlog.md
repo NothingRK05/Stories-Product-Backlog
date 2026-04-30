@@ -13,6 +13,7 @@ permalink: /backlogs/product-backlog/
 | ST-022 | As a user, I want to be able to sort by different categories; ID, priority, Spike vs not spike, ready vs not ready, estimation, and the developer. | 9 | 3 | N | -- | -- |
 | ST-041 | As a user, I want to give other users access to my projects so they can edit it. | 9 | 2 | N | -- | -- |
 | ST-043 | As a developer, I want to give brief comment declarations for what our program does to help future developers. | 9 | 2 | Y | -- | -- |
+| ST-053 | As a developer, I want to provide a document explaining what our program does and what we have not implemented to help future developers. | 9 | 2 | Y | -- | -- |
 | ST-045 | As a developer, I want to give every user a username. | 9 | 1 | Y | -- | -- |
 | ST-038 | As a user, I want to light and dark mode to stay consistent between all pages. | 8 | 2 | N | -- | -- |
 | ST-042 | As a user, I want to see what projects I have and what projects have been shared with me. | 8 | 2 | N | -- | -- |
