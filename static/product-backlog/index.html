@@ -12,14 +12,6 @@
     <a href="/" class="logo">Stories</a>
   
     <div class="nav-right" id="authArea"></div>
-  
-    <label class="theme-switch">
-      <input type="checkbox" id="themeToggle" checked />
-      <span class="slider">
-        <span class="icon moon">🌙</span>
-        <span class="icon sun">☀️</span>
-      </span>
-    </label>
   </header>
 
   <div class="container" style="margin-top: 60px;">
@@ -100,15 +92,6 @@
 
 
   <script type="module" src="../js/product-backlog.js"></script>
-
-  <script>
-    const toggle = document.getElementById('themeToggle');
-    const html = document.documentElement;
-
-    toggle.addEventListener('change', () => {
-      html.setAttribute('data-theme', toggle.checked ? 'dark' : 'light');
-    });
-  </script>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>

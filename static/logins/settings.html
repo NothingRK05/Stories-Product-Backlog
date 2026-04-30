@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/logins/settings.css" />
+    <title>Settings | Stories</title>
+</head>
+
+<body>
+
+    <header class="header">
+        <a href="/" class="logo">Stories</a>
+
+        <div class="nav-right" id="authArea"></div>
+    </header>
+
+    <div class="settings-container">
+
+        <!-- Sidebar -->
+        <aside class="settings-sidebar">
+            <div class="sidebar-item active" data-section="profile">Profile</div>
+            <div class="sidebar-item" data-section="account">Account</div>
+            <div class="sidebar-item" data-section="appearance">Appearance</div>
+            <div class="sidebar-item" data-section="security">Security</div>
+            <div class="sidebar-item" data-section="notifications">Notifications</div>
+            <div class="sidebar-item danger" data-section="danger">Danger Zone</div>
+        </aside>
+
+        <!-- Content -->
+        <section class="settings-content">
+
+            <!-- Profile -->
+            <div class="settings-section" id="profile">
+                <h2>Profile</h2>
+                <p>Update your display name.</p>
+
+                <label>Display Name</label>
+                <input id="newDisplayName" type="text" class="auth-input" placeholder="Enter new name" />
+
+                <button id="saveNameBtn" class="btn" style="margin-top: 15px;">Save</button>
+            </div>
+
+            <!-- Account -->
+            <div class="settings-section hidden" id="account">
+                <h2>Account</h2>
+                <p>Email: <span id="accountEmail"></span></p>
+                <p>User ID: <span id="accountUID"></span></p>
+                <p>Username: <span id="displayName"></span></p>
+            </div>
+
+            <!-- Appearance -->
+            <div class="settings-section hidden" id="appearance">
+                <h2>Appearance</h2>
+                <p>Choose your theme.</p>
+            
+                <label class="theme-switch">
+                    <input type="checkbox" id="settingsThemeToggle" />
+                    <span class="slider">
+                        <span class="icon moon">🌙</span>
+                        <span class="icon sun">☀️</span>
+                    </span>
+                </label>
+            </div>
+
+            <!-- Security -->
+            <div class="settings-section hidden" id="security">
+                <h2>Security</h2>
+                <p>Password reset and 2FA coming soon.</p>
+            </div>
+
+            <!-- Notifications -->
+            <div class="settings-section hidden" id="notifications">
+                <h2>Notifications</h2>
+                <p>Notification preferences coming soon.</p>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="settings-section hidden" id="danger">
+                <h2 style="color:#d9534f;">Danger Zone</h2>
+                <button class="btn" style="background:#d9534f;">Delete Account</button>
+            </div>
+
+        </section>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <script src="../js/firebase.js"></script>
+    <script src="../js/auth-state.js"></script>
+    <script src="../js/settings.js"></script>
+
+</body>
+
+</html>

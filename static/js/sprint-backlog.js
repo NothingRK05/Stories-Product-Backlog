@@ -21,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-signInWithEmailAndPassword(auth, "rktest2156@gmail.com", "LightningMcQueen21");
+//signInWithEmailAndPassword(auth, "rktest2156@gmail.com", "LightningMcQueen21");
 
 let hasLoaded = false;
 

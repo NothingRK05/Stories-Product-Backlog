@@ -9,15 +9,9 @@
 <body>
 
   <header class="header">
-    <a href="/#" class="logo">Stories</a>
+    <a href="/" class="logo">Stories</a>
 
-    <label class="theme-switch">
-      <input type="checkbox" id="themeToggle" checked />
-      <span class="slider">
-        <span class="icon moon">🌙</span>
-        <span class="icon sun">☀️</span>
-      </span>
-    </label>
+    <div class="nav-right" id="authArea"></div>
   </header>
 
   <div class="container" style="margin-top: 60px;">
@@ -96,14 +90,11 @@
 
 <script type="module" src="../js/sprint-backlog.js"></script>
 
-  <script>
-    const toggle = document.getElementById('themeToggle');
-    const html = document.documentElement;
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
-    toggle.addEventListener('change', () => {
-      html.setAttribute('data-theme', toggle.checked ? 'dark' : 'light');
-    });
-  </script>
+<script src="../js/firebase.js"></script>
+<script src="../js/auth-state.js"></script>
 
 </body>
 </html>
