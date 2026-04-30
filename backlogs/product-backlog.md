@@ -28,6 +28,7 @@ permalink: /backlogs/product-backlog/
 | ST-047 | As a user, I want to be able to verify my email or phone number. | 7 | 2 | N | -- | -- |
 | ST-048 | As a user, I want to have a profile button that has a modal that gives me options to the settings page and log-out button. | 7 | 4 | N | -- | -- |
 | ST-050 | As a user, I want to be able to see which stories are specifically mine in a project sprint backlog. | 7 | 2 | N | -- | -- |
+| ST-054 | As a developer, I want to make our ReadME.md more presentable and describe the project | 7 | 2 | Y | -- | -- |
 | ST-024 | As a developer, I want to create a way for users to be able to export their product and sprint backlogs to pdfs. | 6 | 2 | N | -- | -- |
 | ST-028 | As a user, I want to be able to add unfinished user stories in my sprint backlog back into the product backlog | 6 | 2 | N | -- | -- |
 | ST-046 | As a user, I want to be able to see that my account is logged in. | 6 | 1 | N | -- | -- |
