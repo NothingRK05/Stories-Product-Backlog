@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="../styles.css" />
-  <title>Product Backlog</title>
+  <title>Sprint Backlog</title>
 </head>
+
 <body>
 
   <header class="header">
     <a href="/" class="logo">Stories</a>
-
     <div class="nav-right" id="authArea"></div>
   </header>
 
@@ -22,58 +22,21 @@
     </div>
   </div>
 
-  <div class="sort-container">
-    <button id="sortBtn" class="btn">Sort By</button>
-  </div>
-
-  <div id="storyList" style="width:100%; margin-bottom:80px;"></div>
-
-  <div id="createModal" class="modal hidden">
-    <div class="modal-content story-modal">
-      <h3>Create User Story</h3>
-
-      <div class="modal-field">
-        <label>Priority (1-10)</label>
-        <input type="number" id="priorityInput" min="1" max="10" />
-      </div>
-
-      <div class="modal-field">
-        <label>Estimate (hours)</label>
-        <input type="number" id="estimateInput" min="1" />
-      </div>
-
-      <div class="modal-field">
-        <label>Assignment</label>
-        <input type="text" id="assignmentInput" />
-      </div>
-
-      <div class="modal-field">
-        <label>Description</label>
-        <textarea id="descriptionInput"></textarea>
-      </div>
-
-      <div class="modal-field">
-        <label>Spike</label>
-        <select id="spikeInput">
-          <option>No</option>
-          <option>Yes</option>
-        </select>
-      </div>
-
-      <div class="modal-field">
-        <label>Status</label>
-        <select id="statusInput">
-          <option>Not Ready</option>
-          <option>Ready</option>
-        </select>
-      </div>
-
-      <div class="modal-buttons">
-        <button id="saveStoryBtn" class="btn">Save Story</button>
-        <button id="closeModalBtn" class="btn cancel-btn">Cancel</button>
-      </div>
-    </div>
-  </div>
+  <table id="storyTable" class="story-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>User Story / Task</th>
+        <th>Priority</th>
+        <th>Estimate</th>
+        <th>Spike</th>
+        <th>Status</th>
+        <th>Assigned</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="storyList"></tbody>
+  </table>
 
   <div id="deleteModal" class="modal hidden">
     <div class="modal-content delete-modal">
@@ -87,14 +50,13 @@
     </div>
   </div>
 
+  <script type="module" src="../js/sprint-backlog.js"></script>
 
-<script type="module" src="../js/sprint-backlog.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-
-<script src="../js/firebase.js"></script>
-<script src="../js/auth-state.js"></script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/auth-state.js"></script>
 
 </body>
 </html>

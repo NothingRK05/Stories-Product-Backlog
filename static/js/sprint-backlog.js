@@ -3,10 +3,10 @@ import {
   getFirestore, collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword 
+  getAuth, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const firebaseConfig = { 
+const firebaseConfig = {
   apiKey: "AIzaSyDcWb980e-FXMugxnx6jE1CZB3WrVFw4-4",
   authDomain: "stories-dec4a.firebaseapp.com",
   databaseURL: "https://stories-dec4a-default-rtdb.firebaseio.com",
@@ -21,8 +21,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-//signInWithEmailAndPassword(auth, "rktest2156@gmail.com", "LightningMcQueen21");
-
 let hasLoaded = false;
 
 onAuthStateChanged(auth, user => {
@@ -32,79 +30,94 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-const storyList = document.getElementById("storyList");
+const tbody = document.getElementById("storyList");
+const deleteModal = document.getElementById("deleteModal");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+
+let storyToDelete = null;
+
+cancelDeleteBtn.onclick = () => {
+  storyToDelete = null;
+  deleteModal.classList.add("hidden");
+};
+
+confirmDeleteBtn.onclick = async () => {
+  if (!storyToDelete) return;
+  const user = auth.currentUser;
+
+  await deleteDoc(doc(db, `users/${user.uid}/sprint-backlog/${storyToDelete}`));
+  deleteModal.classList.add("hidden");
+  storyToDelete = null;
+  loadSprintStories(user.uid);
+};
 
 async function loadSprintStories(uid) {
-  storyList.innerHTML = "";
+  tbody.innerHTML = "";
+
   const q = query(collection(db, `users/${uid}/sprint-backlog`), orderBy("storyId"));
   const snapshot = await getDocs(q);
 
   snapshot.forEach(docSnap => {
     const s = docSnap.data();
-    const box = document.createElement("div");
-    box.className = "info-box";
 
-    box.innerHTML = `
-      <div class="story-header">
-        <h3>ID ${s.storyId} — Priority ${s.priority}</h3>
-        <div class="story-menu">
-          <button class="menu-btn">⋮</button>
-          <div class="menu-dropdown hidden">
-            <div class="menu-item mark-as-ready" data-id="${s.storyId}">Mark As Ready</div>
-            <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
-          </div>
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${s.storyId}</td>
+      <td>${s.description}</td>
+      <td>${s.priority}</td>
+      <td>${s.estimate} hrs</td>
+      <td>${s.spike}</td>
+      <td>${s.status}</td>
+      <td>${s.assignment}</td>
+
+      <td style="position:relative; width:40px; text-align:right;">
+        <button class="menu-btn" type="button">⋮</button>
+        <div class="menu-dropdown">
+          <div class="menu-item mark-ready" data-id="${s.storyId}">Mark As Ready</div>
+          <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
         </div>
-      </div>
-
-      <p><strong>Description:</strong> ${s.description}</p>
-      <p><strong>Estimate:</strong> ${s.estimate} hours</p>
-      <p><strong>Assignment:</strong> ${s.assignment}</p>
-      <p><strong>Spike:</strong> ${s.spike}</p>
-      <p><strong>Status:</strong> ${s.status}</p>
+      </td>
     `;
 
-    storyList.appendChild(box);
+    tbody.appendChild(tr);
   });
 }
 
-/* --- MENU TOGGLE --- */
 document.addEventListener("click", e => {
   if (!e.target.classList.contains("menu-btn")) {
-    document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.add("hidden"));
+    document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.remove("show"));
+    return;
   }
-  if (e.target.classList.contains("menu-btn")) {
-    const dropdown = e.target.nextElementSibling;
-    if (dropdown) {
-      dropdown.classList.toggle("hidden");
-    }
-  }
+
+  const dropdown = e.target.nextElementSibling;
+  dropdown.classList.toggle("show");
 });
 
-/* --- DELETE FROM SPRINT BACKLOG --- */
-document.addEventListener("click", async e => {
+document.addEventListener("click", e => {
   if (e.target.classList.contains("delete-item")) {
-    const storyId = e.target.dataset.id;
-    const user = auth.currentUser;
-    if (!user) return;
-
-    await deleteDoc(doc(db, `users/${user.uid}/sprint-backlog/${storyId}`));
-    loadSprintStories(user.uid);
+    storyToDelete = e.target.dataset.id;
+    deleteModal.classList.remove("hidden");
   }
 });
 
-/* --- MARK AS READY (just updates status for now) --- */
 document.addEventListener("click", async e => {
-  if (e.target.classList.contains("mark-as-ready")) {
+  if (e.target.classList.contains("mark-ready")) {
     const storyId = e.target.dataset.id;
     const user = auth.currentUser;
-    if (!user) return;
 
     const ref = doc(db, `users/${user.uid}/sprint-backlog/${storyId}`);
     const snap = await getDoc(ref);
     if (!snap.exists()) return;
 
     const data = snap.data();
-    await setDoc(ref, { ...data, status: "Ready", updatedAt: Date.now() });
+
+    await setDoc(ref, {
+      ...data,
+      status: "Ready",
+      updatedAt: Date.now()
+    });
 
     loadSprintStories(user.uid);
   }

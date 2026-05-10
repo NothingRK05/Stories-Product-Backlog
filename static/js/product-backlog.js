@@ -117,39 +117,39 @@ async function saveStory(uid) {
   loadStories(uid);
 }
 
-async function loadStories(uid) {
-  storyList.innerHTML = "";
-  const q = query(collection(db, `users/${uid}/product-backlog`), orderBy("storyId"));
-  const snapshot = await getDocs(q);
+  async function loadStories(uid) {
+    const tbody = document.getElementById("storyList");
+    tbody.innerHTML = "";
 
-  snapshot.forEach(docSnap => {
-    const s = docSnap.data();
-    const box = document.createElement("div");
-    box.className = "info-box";
+    const q = query(collection(db, `users/${uid}/product-backlog`), orderBy("storyId"));
+    const snapshot = await getDocs(q);
 
-    box.innerHTML = `
-      <div class="story-header">
-        <h3>ID ${s.storyId} — Priority ${s.priority}</h3>
-        <div class="story-menu">
-          <button class="menu-btn">⋮</button>
+    snapshot.forEach(docSnap => {
+      const s = docSnap.data();
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${s.storyId}</td>
+        <td>${s.description}</td>
+        <td>${s.priority}</td>
+        <td>${s.estimate} hrs</td>
+        <td>${s.spike}</td>
+        <td>${s.status}</td>
+        <td>${s.assignment}</td>
+        <td style="position:relative; width:40px; text-align:right;">
+          <button class="menu-btn" type="button">⋮</button>
           <div class="menu-dropdown hidden">
             <div class="menu-item edit-item" data-id="${s.storyId}">Edit</div>
             <div class="menu-item move-item" data-id="${s.storyId}">Move to Sprint Backlog</div>
             <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
           </div>
-        </div>
-      </div>
+        </td>
+      `;
 
-      <p><strong>Description:</strong> ${s.description}</p>
-      <p><strong>Estimate:</strong> ${s.estimate} hours</p>
-      <p><strong>Assignment:</strong> ${s.assignment}</p>
-      <p><strong>Spike:</strong> ${s.spike}</p>
-      <p><strong>Status:</strong> ${s.status}</p>
-    `;
-
-    storyList.appendChild(box);
-  });
-}
+      tbody.appendChild(tr);
+    });
+  }
 
 async function moveStoryToSprintBacklog(uid, storyId) {
   const sourceRef = doc(db, `users/${uid}/product-backlog/${storyId}`);
@@ -174,15 +174,16 @@ async function moveStoryToSprintBacklog(uid, storyId) {
 }
 
 
-document.addEventListener("click", e => {
-  if (!e.target.classList.contains("menu-btn")) {
-    document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.add("hidden"));
-  }
-  if (e.target.classList.contains("menu-btn")) {
+  document.addEventListener("click", e => {
+    if (!e.target.classList.contains("menu-btn")) {
+      document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.remove("show"));
+      return;
+    }
+
     const dropdown = e.target.nextElementSibling;
-    dropdown.classList.toggle("hidden");
-  }
-});
+    dropdown.classList.toggle("show");
+  });
+
 
 document.addEventListener("click", async e => {
   if (e.target.classList.contains("delete-item")) {
