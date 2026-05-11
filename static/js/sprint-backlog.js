@@ -132,9 +132,6 @@ document.addEventListener("click", async e => {
 
     loadSprintStories(user.uid, projectId);
   }
-<<<<<<< HEAD
-});
-=======
 });
 
 let currentSort = null;
@@ -185,4 +182,3 @@ function sortStories() {
   tbody.innerHTML = "";
   sorted.forEach(r => tbody.appendChild(r));
 }
->>>>>>> 08f1441c3e7401d915b25c6fe0b3bffa2ceaa53c
