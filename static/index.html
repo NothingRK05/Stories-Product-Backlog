@@ -90,6 +90,18 @@
     }
   });
 </script>
-
+<script>
+  // Wake backend server on page load
+  window.addEventListener('load', () => {
+    fetch('https://back--stories-dec4a.us-east4.hosted.app/ping')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Backend awake:', data);
+      })
+      .catch(error => {
+        console.error('Ping failed:', error);
+      });
+  });
+</script>
 </body>
 </html>
