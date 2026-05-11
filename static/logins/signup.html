@@ -1,43 +1,29 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/styles.css" />
-    <title>Sign Up | Stories</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>Sign Up | Stories</title>
 </head>
-
 <body>
+  <header class="header">
+    <a href="/" class="logo">Stories</a>
+  </header>
 
-    <header class="header">
-        <a href="/" class="logo">Stories</a>
-    
-    </header>
+  <div class="auth-page-container">
+    <h2 class="auth-page-title">Create an Account</h2>
 
-    <div class="auth-page-container">
-        <h2 class="auth-page-title">Create an Account</h2>
+    <form>
+      <input id="signupName" type="text" class="auth-input" placeholder="Username" required />
+      <input id="signupEmail" type="email" class="auth-input" placeholder="Email" required />
+      <input id="signupPassword" type="password" class="auth-input" placeholder="Password" required />
+      <button type="submit" class="auth-submit">Sign Up</button>
+    </form>
 
-        <form>
-            <input id="signupName" type="text" class="auth-input" placeholder="Username" required />
-            <input id="signupEmail" type="email" class="auth-input" placeholder="Email" required />
-            <input id="signupPassword" type="password" class="auth-input" placeholder="Password" required />
-
-
-            <button type="submit" class="auth-submit">Sign Up</button>
-        </form>
-
-        <a href="/logins/login.html" class="auth-switch">Already have an account? Login</a>
-        <a href="/" class="auth-switch">Back to Home</a>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    
-    <script src="../js/firebase.js"></script>
-    <script src="../js/auth-state.js"></script>
-    <script src="../js/auth-signup.js"></script>
-
+    <a href="/logins/login.html" class="auth-switch">Already have an account? Login</a>
+    <a href="/" class="auth-switch">Back to Home</a>
+  </div>
+  <script type="module" src="../js/auth-signup.js"></script>
 </body>
-
 </html>

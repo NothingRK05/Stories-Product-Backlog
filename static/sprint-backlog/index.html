@@ -1,4 +1,3 @@
-<!-- Displays stories currently assigned to sprint backlog -->
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -10,6 +9,10 @@
 
 <body>
 
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-spinner"></div>
+  </div>
+
   <header class="header">
     <a href="/" class="logo">Stories</a>
     <div class="nav-right" id="authArea"></div>
@@ -19,7 +22,8 @@
     <h2 class="title">Sprint Backlog</h2>
 
     <div style="display:flex; justify-content:center; gap:20px; margin-top:25px;">
-      <a href="/product-backlog" class="btn">Switch to Product Backlog</a>
+      <a id="switchProductBtn" class="btn">Switch to Product Backlog</a>
+
       <div class="sort-container">
         <button id="sortBtn" class="btn">Sort By</button>
         <div id="sortMenu" class="sort-menu hidden">
@@ -51,6 +55,7 @@
     <tbody id="storyList"></tbody>
   </table>
 
+  <!-- DELETE MODAL -->
   <div id="deleteModal" class="modal hidden">
     <div class="modal-content delete-modal">
       <h3>Delete User Story</h3>
@@ -63,14 +68,17 @@
     </div>
   </div>
 
+  <script type="module" src="../js/firebase.js"></script>
+  <script type="module" src="../js/auth-state.js"></script>
   <script type="module" src="../js/sprint-backlog.js"></script>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get("project");
 
-  <script src="../js/firebase.js"></script>
-  <script src="../js/auth-state.js"></script>
+    document.getElementById("switchProductBtn").href =
+      `/product-backlog?project=${projectId}`;
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  
 </body>
 </html>
