@@ -1,3 +1,4 @@
+// Initializes Firebase authentication services
 const firebaseConfig = {
   apiKey: "AIzaSyDcWb980e-FXMugxnx6jE1CZB3WrVFw4-4",
   authDomain: "stories-dec4a.firebaseapp.com",

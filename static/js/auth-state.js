@@ -1,3 +1,4 @@
+// Redirects logged in users to the product backlog page
 auth.onAuthStateChanged((user) => {
     const authArea = document.getElementById("authArea");
     const userDisplay = document.getElementById("currentUserDisplay");

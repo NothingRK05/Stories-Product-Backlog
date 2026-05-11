@@ -53,7 +53,10 @@ This project was created for the Lewis University Software Engineering course as
 ---
 
 ## Team Members
-- Add team member names here
+  - Robert Didomenico
+  - Ricardo Salgado
+  - Bryce Dannenberg
+  - Angelo Fornero
 
 ---
 
