@@ -1,34 +1,51 @@
-// auth-signup.js (modular)
 import { auth, db } from "./firebase.js";
 import {
   createUserWithEmailAndPassword,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
+  doc,
   setDoc,
-  doc
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.querySelector("form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const name = document.getElementById("signupName").value.trim();
+  const usernameRaw = document.getElementById("signupName").value.trim();
   const email = document.getElementById("signupEmail").value.trim();
-  const password = document.getElementById("signupPassword").value;
+  const password = document.getElementById("signupPassword").value.trim();
+  const usernameDisplay = usernameRaw;
+  const usernameLower = usernameRaw.toLowerCase();
 
   try {
+    const usernameRef = doc(db, "usernames", usernameLower);
+    const usernameSnap = await getDoc(usernameRef);
+
+    if (usernameSnap.exists()) {
+      alert("That username is already taken.");
+      return;
+    }
+
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-    await updateProfile(userCred.user, { displayName: name });
-
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      displayName: name,
-      email: email,
-      createdAt: Date.now()
-    });
-
+    const user = userCred.user;
+    await setDoc(usernameRef, { uid: user.uid });
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        displayName: usernameDisplay,
+        usernameRaw: usernameDisplay,
+        usernameLower: usernameLower,
+        email: user.email,
+        createdAt: Date.now()
+      },
+      { merge: true }
+    );
+    await updateProfile(user, { displayName: usernameDisplay });
     window.location.href = "/projects";
+
   } catch (err) {
+    console.error(err);
     alert(err.message);
   }
 });
