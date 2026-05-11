@@ -29,6 +29,7 @@ let currentSort = "id";
 
 onAuthStateChanged(auth, async (user) => {
   if (!user || !projectId) return;
+
   currentUid = user.uid;
 
   const ownerUid = await getProjectOwnerUid(projectId, currentUid);
@@ -66,6 +67,7 @@ async function loadStories() {
 
 function addStoryRow(story) {
   const tr = document.createElement("tr");
+
   tr.innerHTML = `
     <td>${story.numericId || ""}</td>
     <td>${story.description || ""}</td>
@@ -78,6 +80,7 @@ function addStoryRow(story) {
       <button class="delete-story-btn" data-id="${story.id}">Delete</button>
     </td>
   `;
+
   storyList.appendChild(tr);
 }
 
@@ -90,7 +93,9 @@ document.addEventListener("click", (e) => {
 
 confirmDeleteBtn.onclick = async () => {
   if (!storyToDelete) return;
+
   await deleteDoc(doc(db, "projects", projectId, "sprint-backlog", storyToDelete));
+
   deleteModal.classList.add("hidden");
   storyToDelete = null;
   loadStories();
@@ -108,6 +113,7 @@ sortBtn.onclick = () => {
 sortMenu.addEventListener("click", (e) => {
   const sort = e.target.dataset.sort;
   if (!sort) return;
+
   currentSort = sort;
   sortMenu.classList.add("hidden");
   loadStories();
@@ -117,13 +123,15 @@ completeSprintBtn.onclick = async () => {
   const colRef = collection(db, "projects", projectId, "sprint-backlog");
   const snap = await getDocs(colRef);
 
-  const batchUpdates = [];
+  const updates = [];
+
   snap.forEach((d) => {
     const data = d.data();
+
     if (data.status === "Done") {
-      batchUpdates.push(deleteDoc(doc(db, "projects", projectId, "sprint-backlog", d.id)));
+      updates.push(deleteDoc(doc(db, "projects", projectId, "sprint-backlog", d.id)));
     } else {
-      batchUpdates.push(
+      updates.push(
         updateDoc(doc(db, "projects", projectId, "sprint-backlog", d.id), {
           status: "Not Ready"
         })
@@ -131,6 +139,6 @@ completeSprintBtn.onclick = async () => {
     }
   });
 
-  await Promise.all(batchUpdates);
+  await Promise.all(updates);
   loadStories();
 };
