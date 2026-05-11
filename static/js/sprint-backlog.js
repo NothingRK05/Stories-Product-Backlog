@@ -91,6 +91,7 @@ async function loadSprintStories(uid, projectId) {
     if (s.storyId === "_init") return;
 
     const tr = document.createElement("tr");
+    tr.dataset.docid = docSnap.id;
 
     tr.innerHTML = `
       <td>${s.storyId}</td>
@@ -218,14 +219,13 @@ function sortStories() {
 // ---------------------------------------------------------
 
 document.getElementById("completeSprintBtn").addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if (!user) return;
+  if (!ownerUid) return;
 
   const rows = Array.from(tbody.querySelectorAll("tr"));
 
-  // Convert DOM rows → story objects
   const sprintStories = rows.map(row => {
     return {
+      docId: row.dataset.docid,  // REAL Firestore doc ID
       storyId: row.children[0].innerText.trim(),
       description: row.children[1].innerText.trim(),
       priority: row.children[2].innerText.trim(),
@@ -237,10 +237,10 @@ document.getElementById("completeSprintBtn").addEventListener("click", async () 
   });
 
   await exportSprintToPDF(sprintStories);
-  await completeSprint(user.uid, sprintStories);
+  await completeSprint(ownerUid, projectId, sprintStories);
 
   alert("Sprint completed");
-  loadSprintStories(user.uid);
+  loadSprintStories(ownerUid, projectId);
 });
 
 async function exportSprintToPDF(stories) {
@@ -248,7 +248,7 @@ async function exportSprintToPDF(stories) {
   const doc = new jsPDF();
 
   doc.setFontSize(18);
-  doc.text("Sprint Report", 14, 20);
+  doc.text("Sprint Backlog", 14, 20);
 
   doc.setFontSize(12);
   let y = 35;
@@ -265,17 +265,19 @@ async function exportSprintToPDF(stories) {
     }
   });
 
-  doc.save("sprint-report.pdf");
+  doc.save("sprint-backlog.pdf");
 }
 
-async function completeSprint(uid, stories) {
+async function completeSprint(uid, projectId, stories) {
+  const base = `users/${uid}/projects/${projectId}`;
+
   for (const s of stories) {
-    const sprintRef = doc(db, `users/${uid}/sprint-backlog/${s.storyId}`);
+    const sprintRef = doc(db, `${base}/sprint-backlog/${s.docId}`);
 
     if (s.status === "Ready") {
       await deleteDoc(sprintRef);
     } else {
-      const productRef = doc(db, `users/${uid}/product-backlog/${s.storyId}`);
+      const productRef = doc(db, `${base}/product-backlog/${s.storyId}`);
 
       await setDoc(productRef, {
         ...s,
