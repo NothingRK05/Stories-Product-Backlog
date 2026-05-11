@@ -238,3 +238,48 @@ document.addEventListener("click", async e => {
     await moveStoryToSprintBacklog(user.uid, storyId);
   }
 });
+
+let currentSort = null;
+
+document.getElementById("sortBtn").addEventListener("click", () => {
+  document.getElementById("sortMenu").classList.toggle("hidden");
+});
+
+document.querySelectorAll("#sortMenu div").forEach(option => {
+  option.addEventListener("click", () => {
+    currentSort = option.dataset.sort;
+    sortStories();
+    document.getElementById("sortMenu").classList.add("hidden");
+  });
+});
+
+function sortStories() {
+  if (!stories || stories.length === 0) return;
+
+  stories.sort((a, b) => {
+    switch (currentSort) {
+      case "id":
+        return a.id.localeCompare(b.id);
+
+      case "priority":
+        return (a.priority || 0) - (b.priority || 0);
+
+      case "estimate":
+        return (a.estimate || 0) - (b.estimate || 0);
+
+      case "spike":
+        return (a.spike === "Yes" ? 1 : 0) - (b.spike === "Yes" ? 1 : 0);
+
+      case "status":
+        return a.status.localeCompare(b.status);
+
+      case "assigned":
+        return (a.assignment || "").localeCompare(b.assignment || "");
+
+      default:
+        return 0;
+    }
+  });
+
+  renderStories();
+}

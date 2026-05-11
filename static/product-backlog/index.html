@@ -20,6 +20,17 @@
     <div style="display:flex; justify-content:center; gap:20px; margin-top:25px;">
       <button id="openCreateModal" class="btn">Create User Story</button>
       <a href="/sprint-backlog" class="btn">Switch to Sprint Backlog</a>
+      <div class="sort-container">
+        <button id="sortBtn" class="btn">Sort By</button>
+        <div id="sortMenu" class="sort-menu hidden">
+          <div data-sort="id">ID</div>
+          <div data-sort="priority">Priority</div>
+          <div data-sort="estimate">Estimate</div>
+          <div data-sort="spike">Spike</div>
+          <div data-sort="status">Status</div>
+          <div data-sort="assigned">Assigned Developer</div>
+        </div>
+      </div>
     </div>
   </div>
 
