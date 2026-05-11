@@ -1,17 +1,61 @@
-# *Getting to Know Each Other Teams* and *Health Insurance Risk Calculator* Backlogs 
+# Stories Product Backlog Website
 
-This template provides a starting point for your [Getting to Know Each Other Teams](https://www.lewisuniversity.org/activity/getting-to-know-each-other-teams) and
-[Health Insurance Risk Calculator for the Web As A Team](https://www.lewisuniversity.org/activity/health-risk-calculator-team-web). 
+## Overview
+Stories is a web application designed to help Scrum teams better manage their user stories, product backlogs, and sprint backlogs. Users can create projects, add and edit user stories, move stories between backlogs, and export backlog information into PDF format.
 
-Start by:
-1. Using this template to create a GitHub Pages website named after your team (CamelCase).
-2. Update the README.md file to reflect that this is your [Getting to Know Each Other Teams](https://www.lewisuniversity.org/activity/getting-to-know-each-other-teams) project. 
-3. Continue to provide links to your Product Backlog(s) and the current sprint backlogs in the README.md file in the format provided below.
-4. Provide links to ALL historical Sprint Backlogs in the “Previous Sprint Backlogs” section.
+This project was created for the Lewis University Software Engineering course as part of the:
+- Getting to Know Each Other Teams project
+- Health Insurance Risk Calculator for the Web As A Team project
 
-The template includes a starter Product Backlog and Sprint Backlog.
-- [Product Backlog](backlogs/product-backlog.md/)
+---
+
+## Features
+- Create and manage projects
+- Add user stories to the product backlog
+- Move stories into the sprint backlog
+- Edit and delete user stories
+- Track story details such as:
+  - ID
+  - Priority
+  - Estimate
+  - Spike
+  - Status
+  - Assignment
+  - Description
+- Export backlog information to PDF
+- Backend ping API to wake the server on page load
+
+---
+
+## Technologies Used
+- HTML
+- CSS
+- JavaScript
+- Node.js
+- Express.js
+- Firebase Authentication
+- GitHub Pages
+- Azure Hosting
+
+---
+
+## Product Backlog
+- [Product Backlog](backlogs/product-backlog.md)
+
+## Current Sprint Backlog
 - [Sprint 04 Backlog](backlogs/sprint-04-backlog.md)
 
-Previous Sprint Backlogs:
-- [[Sprint XX Backlog]]
+---
+
+## Previous Sprint Backlogs
+- [Sprint XX Backlog]
+
+---
+
+## Team Members
+- Add team member names here
+
+---
+
+## Project Goal
+The goal of Stories is to provide Scrum teams with a simple and organized way to manage development tasks and user stories across multiple projects.
