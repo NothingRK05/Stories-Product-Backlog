@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="../styles.css" />
+  <title>My Projects</title>
+</head>
+
+<body>
+
+    <header class="header">
+        <a href="/" class="logo">Stories</a>
+        <div class="nav-right" id="authArea"></div>
+    </header>
+
+    <div class="container" style="margin-top: 60px;">
+        <h2 class="title">My Projects</h2>
+
+        <div style="display:flex; justify-content:center; margin-top:25px;">
+            <button id="openCreateProject" class="btn">Create Project</button>
+        </div>
+    </div>
+
+    <div id="projectList" style="width:100%; margin-bottom:80px;"></div>
+
+    <div id="createProjectModal" class="modal hidden">
+    <div class="modal-content story-modal">
+        <h3>Create Project</h3>
+
+        <div class="modal-field">
+        <label>Project Name</label>
+        <input type="text" id="projectNameInput" />
+        </div>
+
+        <div class="modal-buttons">
+        <button id="saveProjectBtn" class="btn">Create</button>
+        <button id="closeProjectModal" class="btn cancel-btn">Cancel</button>
+        </div>
+    </div>
+    </div>
+
+    <div id="deleteProjectModal" class="modal hidden">
+    <div class="modal-content delete-modal">
+        <h3>Delete Project</h3>
+        <p>This will permanently delete this project and all its stories.</p>
+
+        <div class="modal-buttons">
+        <button id="confirmDeleteProject" class="btn" style="background:#d9534f;">Delete</button>
+        <button id="cancelDeleteProject" class="btn cancel-btn">Cancel</button>
+        </div>
+    </div>
+    </div>
+
+    <div id="customPopup" class="popup-overlay hidden">
+    <div class="popup-box">
+        <h3 id="popupTitle">Notice</h3>
+        <p id="popupMessage"></p>
+
+        <button id="popupCloseBtn">OK</button>
+    </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script type="module" src="../js/projects.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <script src="../js/firebase.js"></script>
+    <script src="../js/auth-state.js"></script>
+
+</body>
+</html>

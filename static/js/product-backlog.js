@@ -3,7 +3,7 @@ import {
   getFirestore, collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword 
+  getAuth, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -21,14 +21,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-//signInWithEmailAndPassword(auth, "rktest2156@gmail.com", "LightningMcQueen21");
-
 let hasLoaded = false;
 
+const params = new URLSearchParams(window.location.search);
+const projectId = params.get("project");
+
+if (!projectId) {
+  console.error("❌ No projectId found in URL. Product backlog cannot load.");
+}
+
 onAuthStateChanged(auth, user => {
-  if (user && !hasLoaded) {
+  if (user && !hasLoaded && projectId) {
     hasLoaded = true;
-    loadStories(user.uid);
+    loadStories(user.uid, projectId);
   }
 });
 
@@ -56,30 +61,33 @@ cancelDeleteBtn.onclick = () => {
 confirmDeleteBtn.onclick = async () => {
   if (!storyToDelete) return;
   const user = auth.currentUser;
-  await deleteDoc(doc(db, `users/${user.uid}/product-backlog/${storyToDelete}`));
+
+  const base = `users/${user.uid}/projects/${projectId}`;
+  await deleteDoc(doc(db, `${base}/product-backlog/${storyToDelete}`));
+
   deleteModal.classList.add("hidden");
   storyToDelete = null;
-  loadStories(user.uid);
+  loadStories(user.uid, projectId);
 };
 
 function resetModal() {
   document.querySelector(".story-modal h3").textContent = "Create User Story";
-  document.getElementById("priorityInput").value = "";
-  document.getElementById("estimateInput").value = "";
-  document.getElementById("assignmentInput").value = "";
-  document.getElementById("descriptionInput").value = "";
-  document.getElementById("spikeInput").value = "No";
-  document.getElementById("statusInput").value = "Not Ready";
+  priorityInput.value = "";
+  estimateInput.value = "";
+  assignmentInput.value = "";
+  descriptionInput.value = "";
+  spikeInput.value = "No";
+  statusInput.value = "Not Ready";
 
   document.getElementById("saveStoryBtn").onclick = () => {
     const user = auth.currentUser;
-    if (user) saveStory(user.uid);
+    if (user) saveStory(user.uid, projectId);
   };
 }
 
-async function getNextStoryId(uid) {
-  const userRef = doc(db, `users/${uid}`);
-  const snap = await getDoc(userRef);
+async function getNextStoryId(uid, projectId) {
+  const projectRef = doc(db, `users/${uid}/projects/${projectId}`);
+  const snap = await getDoc(projectRef);
 
   let next = 1;
 
@@ -87,22 +95,24 @@ async function getNextStoryId(uid) {
     next = Number(snap.data().latestStoryId) + 1;
   }
 
-  await setDoc(userRef, { latestStoryId: next }, { merge: true });
+  await setDoc(projectRef, { latestStoryId: next }, { merge: true });
 
   return next.toString().padStart(4, "0");
 }
 
-async function saveStory(uid) {
-  const priority = document.getElementById("priorityInput").value;
-  const estimate = document.getElementById("estimateInput").value;
-  const assignment = document.getElementById("assignmentInput").value;
-  const description = document.getElementById("descriptionInput").value;
-  const spike = document.getElementById("spikeInput").value;
-  const status = document.getElementById("statusInput").value;
+async function saveStory(uid, projectId) {
+  const priority = priorityInput.value;
+  const estimate = estimateInput.value;
+  const assignment = assignmentInput.value;
+  const description = descriptionInput.value;
+  const spike = spikeInput.value;
+  const status = statusInput.value;
 
-  const storyId = await getNextStoryId(uid);
+  const storyId = await getNextStoryId(uid, projectId);
 
-  await setDoc(doc(db, `users/${uid}/product-backlog/${storyId}`), {
+  const base = `users/${uid}/projects/${projectId}`;
+
+  await setDoc(doc(db, `${base}/product-backlog/${storyId}`), {
     storyId,
     priority,
     estimate,
@@ -114,78 +124,74 @@ async function saveStory(uid) {
   });
 
   modal.classList.add("hidden");
-  loadStories(uid);
+  loadStories(uid, projectId);
 }
 
-  async function loadStories(uid) {
-    const tbody = document.getElementById("storyList");
-    tbody.innerHTML = "";
+async function loadStories(uid, projectId) {
+  storyList.innerHTML = "";
 
-    const q = query(collection(db, `users/${uid}/product-backlog`), orderBy("storyId"));
-    const snapshot = await getDocs(q);
+  const base = `users/${uid}/projects/${projectId}`;
+  const q = query(collection(db, `${base}/product-backlog`), orderBy("storyId"));
+  const snapshot = await getDocs(q);
 
-    snapshot.forEach(docSnap => {
-      const s = docSnap.data();
+  snapshot.forEach(docSnap => {
+    const s = docSnap.data();
 
-      const tr = document.createElement("tr");
+    const tr = document.createElement("tr");
 
-      tr.innerHTML = `
-        <td>${s.storyId}</td>
-        <td>${s.description}</td>
-        <td>${s.priority}</td>
-        <td>${s.estimate} hrs</td>
-        <td>${s.spike}</td>
-        <td>${s.status}</td>
-        <td>${s.assignment}</td>
-        <td style="position:relative; width:40px; text-align:right;">
-          <button class="menu-btn" type="button">⋮</button>
-          <div class="menu-dropdown hidden">
-            <div class="menu-item edit-item" data-id="${s.storyId}">Edit</div>
-            <div class="menu-item move-item" data-id="${s.storyId}">Move to Sprint Backlog</div>
-            <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
-          </div>
-        </td>
-      `;
+    tr.innerHTML = `
+      <td>${s.storyId}</td>
+      <td>${s.description}</td>
+      <td>${s.priority}</td>
+      <td>${s.estimate} hrs</td>
+      <td>${s.spike}</td>
+      <td>${s.status}</td>
+      <td>${s.assignment}</td>
+      <td style="position:relative; width:40px; text-align:right;">
+        <button class="menu-btn" type="button">⋮</button>
+        <div class="menu-dropdown hidden">
+          <div class="menu-item edit-item" data-id="${s.storyId}">Edit</div>
+          <div class="menu-item move-item" data-id="${s.storyId}">Move to Sprint Backlog</div>
+          <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
+        </div>
+      </td>
+    `;
 
-      tbody.appendChild(tr);
-    });
-  }
+    storyList.appendChild(tr);
+  });
+}
 
-async function moveStoryToSprintBacklog(uid, storyId) {
-  const sourceRef = doc(db, `users/${uid}/product-backlog/${storyId}`);
-  const targetRef = doc(db, `users/${uid}/sprint-backlog/${storyId}`);
+async function moveStoryToSprintBacklog(uid, projectId, storyId) {
+  const base = `users/${uid}/projects/${projectId}`;
+  const sourceRef = doc(db, `${base}/product-backlog/${storyId}`);
+  const targetRef = doc(db, `${base}/sprint-backlog/${storyId}`);
 
   const snap = await getDoc(sourceRef);
   if (!snap.exists()) return;
 
   const data = snap.data();
 
-  // 1. Write to sprint backlog
   await setDoc(targetRef, {
     ...data,
     movedAt: Date.now()
   });
 
-  // 2. Remove from product backlog
   await deleteDoc(sourceRef);
 
-  // 3. Refresh UI
-  loadStories(uid);
+  loadStories(uid, projectId);
 }
 
+document.addEventListener("click", e => {
+  if (!e.target.classList.contains("menu-btn")) {
+    document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.remove("show"));
+    return;
+  }
 
-  document.addEventListener("click", e => {
-    if (!e.target.classList.contains("menu-btn")) {
-      document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.remove("show"));
-      return;
-    }
+  const dropdown = e.target.nextElementSibling;
+  dropdown.classList.toggle("show");
+});
 
-    const dropdown = e.target.nextElementSibling;
-    dropdown.classList.toggle("show");
-  });
-
-
-document.addEventListener("click", async e => {
+document.addEventListener("click", e => {
   if (e.target.classList.contains("delete-item")) {
     storyToDelete = e.target.dataset.id;
     deleteModal.classList.remove("hidden");
@@ -197,16 +203,17 @@ document.addEventListener("click", async e => {
     const storyId = e.target.dataset.id;
     const user = auth.currentUser;
 
-    const docRef = doc(db, `users/${user.uid}/product-backlog/${storyId}`);
+    const base = `users/${user.uid}/projects/${projectId}`;
+    const docRef = doc(db, `${base}/product-backlog/${storyId}`);
     const snap = await getDoc(docRef);
     const s = snap.data();
 
-    document.getElementById("priorityInput").value = s.priority;
-    document.getElementById("estimateInput").value = s.estimate;
-    document.getElementById("assignmentInput").value = s.assignment;
-    document.getElementById("descriptionInput").value = s.description;
-    document.getElementById("spikeInput").value = s.spike;
-    document.getElementById("statusInput").value = s.status;
+    priorityInput.value = s.priority;
+    estimateInput.value = s.estimate;
+    assignmentInput.value = s.assignment;
+    descriptionInput.value = s.description;
+    spikeInput.value = s.spike;
+    statusInput.value = s.status;
 
     document.querySelector(".story-modal h3").textContent = "Edit User Story";
 
@@ -223,7 +230,7 @@ document.addEventListener("click", async e => {
       });
 
       modal.classList.add("hidden");
-      loadStories(user.uid);
+      loadStories(user.uid, projectId);
     };
 
     modal.classList.remove("hidden");
@@ -235,51 +242,6 @@ document.addEventListener("click", async e => {
     const storyId = e.target.dataset.id;
     const user = auth.currentUser;
 
-    await moveStoryToSprintBacklog(user.uid, storyId);
+    await moveStoryToSprintBacklog(user.uid, projectId, storyId);
   }
 });
-
-let currentSort = null;
-
-document.getElementById("sortBtn").addEventListener("click", () => {
-  document.getElementById("sortMenu").classList.toggle("hidden");
-});
-
-document.querySelectorAll("#sortMenu div").forEach(option => {
-  option.addEventListener("click", () => {
-    currentSort = option.dataset.sort;
-    sortStories();
-    document.getElementById("sortMenu").classList.add("hidden");
-  });
-});
-
-function sortStories() {
-  if (!stories || stories.length === 0) return;
-
-  stories.sort((a, b) => {
-    switch (currentSort) {
-      case "id":
-        return a.id.localeCompare(b.id);
-
-      case "priority":
-        return (a.priority || 0) - (b.priority || 0);
-
-      case "estimate":
-        return (a.estimate || 0) - (b.estimate || 0);
-
-      case "spike":
-        return (a.spike === "Yes" ? 1 : 0) - (b.spike === "Yes" ? 1 : 0);
-
-      case "status":
-        return a.status.localeCompare(b.status);
-
-      case "assigned":
-        return (a.assignment || "").localeCompare(b.assignment || "");
-
-      default:
-        return 0;
-    }
-  });
-
-  renderStories();
-}

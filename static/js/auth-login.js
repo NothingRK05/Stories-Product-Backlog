@@ -6,7 +6,7 @@ document.querySelector("form").addEventListener("submit", async (e) => {
 
     try {
         await auth.signInWithEmailAndPassword(email, password);
-        window.location.href = "/product-backlog";
+        window.location.href = "/projects";
     } catch (err) {
         alert(err.message);
     }

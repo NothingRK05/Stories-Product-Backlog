@@ -23,10 +23,17 @@ const auth = getAuth(app);
 
 let hasLoaded = false;
 
+const params = new URLSearchParams(window.location.search);
+const projectId = params.get("project");
+
+if (!projectId) {
+  console.error("❌ No projectId found in URL. Sprint backlog cannot load.");
+}
+
 onAuthStateChanged(auth, user => {
-  if (user && !hasLoaded) {
+  if (user && !hasLoaded && projectId) {
     hasLoaded = true;
-    loadSprintStories(user.uid);
+    loadSprintStories(user.uid, projectId);
   }
 });
 
@@ -46,16 +53,19 @@ confirmDeleteBtn.onclick = async () => {
   if (!storyToDelete) return;
   const user = auth.currentUser;
 
-  await deleteDoc(doc(db, `users/${user.uid}/sprint-backlog/${storyToDelete}`));
+  const base = `users/${user.uid}/projects/${projectId}`;
+  await deleteDoc(doc(db, `${base}/sprint-backlog/${storyToDelete}`));
+
   deleteModal.classList.add("hidden");
   storyToDelete = null;
-  loadSprintStories(user.uid);
+  loadSprintStories(user.uid, projectId);
 };
 
-async function loadSprintStories(uid) {
+async function loadSprintStories(uid, projectId) {
   tbody.innerHTML = "";
 
-  const q = query(collection(db, `users/${uid}/sprint-backlog`), orderBy("storyId"));
+  const base = `users/${uid}/projects/${projectId}`;
+  const q = query(collection(db, `${base}/sprint-backlog`), orderBy("storyId"));
   const snapshot = await getDocs(q);
 
   snapshot.forEach(docSnap => {
@@ -107,7 +117,8 @@ document.addEventListener("click", async e => {
     const storyId = e.target.dataset.id;
     const user = auth.currentUser;
 
-    const ref = doc(db, `users/${user.uid}/sprint-backlog/${storyId}`);
+    const base = `users/${user.uid}/projects/${projectId}`;
+    const ref = doc(db, `${base}/sprint-backlog/${storyId}`);
     const snap = await getDoc(ref);
     if (!snap.exists()) return;
 
@@ -119,6 +130,6 @@ document.addEventListener("click", async e => {
       updatedAt: Date.now()
     });
 
-    loadSprintStories(user.uid);
+    loadSprintStories(user.uid, projectId);
   }
 });

@@ -9,7 +9,7 @@ document.querySelector("form").addEventListener("submit", async (e) => {
         const userCred = await auth.createUserWithEmailAndPassword(email, password);
         await userCred.user.updateProfile({ displayName: name });
 
-        window.location.href = "/product-backlog";
+        window.location.href = "/projects";
     } catch (err) {
         alert(err.message);
     }

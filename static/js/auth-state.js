@@ -48,7 +48,7 @@ auth.onAuthStateChanged((user) => {
             window.location.href = "/logins/settings.html";
         });
         productsBtn.addEventListener("click", async () => {
-            window.location.href = "/product-backlog";
+            window.location.href = "/projects";
         });
 
     } else {
