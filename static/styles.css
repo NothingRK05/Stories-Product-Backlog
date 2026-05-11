@@ -87,6 +87,132 @@ html[data-theme="light"] .header {
   background: var(--purple-light);
 }
 
+.profile-icon {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 50%;
+  background: var(--purple-light);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 2000;
+}
+
+.profile-menu {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  width: 160px;
+  display: none;
+  z-index: 3000;
+}
+
+.profile-menu.show {
+  display: block;
+}
+
+.profile-menu-item {
+  padding: 12px;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: var(--transition);
+}
+
+.profile-menu-item:hover {
+  background: #333;
+  color: var(--purple-light);
+}
+
+/* ============================================================
+   PROJECTS LIST
+   ============================================================ */
+
+#projectList {
+  width: 90%;
+  max-width: 900px;
+  margin: 40px auto 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 26px;
+  min-height: 120px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(106, 90, 205, 0.25);
+  border-color: var(--purple-light);
+}
+
+.project-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.project-type {
+  font-size: 14px;
+  color: var(--purple-light);
+}
+
+.project-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.project-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.project-btn.share {
+  background: var(--purple-light);
+  color: white;
+}
+
+.project-btn.share:hover {
+  background: var(--purple);
+}
+
+.project-btn.delete {
+  background: #ff4d4d;
+  color: white;
+}
+
+.project-btn.delete:hover {
+  background: #d93636;
+}
+
 /* ============================================================
    THEME SWITCH
    ============================================================ */

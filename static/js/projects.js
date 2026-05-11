@@ -9,6 +9,7 @@ import {
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { showLoading, hideLoading } from "./loading.js";
 import { sendShareRequest } from "./sharing.js";
@@ -45,9 +46,11 @@ onAuthStateChanged(auth, async (user) => {
 
 async function loadProjects() {
   if (!currentUserUid) return;
+
   showLoading();
   projectList.innerHTML = "";
 
+  // Owned projects
   const ownedQuery = query(
     collection(db, "projects"),
     where("ownerUid", "==", currentUserUid)
@@ -56,55 +59,70 @@ async function loadProjects() {
 
   ownedSnap.forEach((docSnap) => {
     const p = docSnap.data();
-    addProjectRow(docSnap.id, p.projectName, true);
+    addProjectCard(docSnap.id, p.projectName, true);
   });
 
+  // Shared projects
   const sharedSnap = await getDocs(
     collection(db, "users", currentUserUid, "shared-projects")
   );
 
   sharedSnap.forEach((docSnap) => {
     const p = docSnap.data();
-    addProjectRow(docSnap.id, p.projectName, false);
+    addProjectCard(docSnap.id, p.projectName, false);
   });
 
   hideLoading();
 }
 
-function addProjectRow(projectId, name, isOwner) {
-  const div = document.createElement("div");
-  div.classList.add("project-row");
+function addProjectCard(projectId, name, isOwner) {
+  const card = document.createElement("div");
+  card.classList.add("project-card");
 
-  div.innerHTML = `
-    <div class="project-name">${name}</div>
-    <div class="project-type">${isOwner ? "Owner" : "Shared"}</div>
+  card.innerHTML = `
+    <div class="project-info">
+      <h3 class="project-name">${name}</h3>
+      <p class="project-type">${isOwner ? "Owner" : "Shared"}</p>
+    </div>
+
     <div class="project-actions">
-      <button class="open-btn" data-id="${projectId}">Open</button>
       ${isOwner ? `
-        <button class="share-btn" data-id="${projectId}">Share</button>
-        <button class="delete-btn" data-id="${projectId}">Delete</button>
+        <button class="project-btn share">Share</button>
+        <button class="project-btn delete">Delete</button>
       ` : ""}
     </div>
   `;
 
-  projectList.appendChild(div);
+  // Clicking the card opens the project
+  card.addEventListener("click", () => {
+    window.location.href = `/product-backlog?project=${projectId}`;
+  });
+
+  // Prevent card click when pressing Share/Delete
+  const shareBtn = card.querySelector(".share");
+  const deleteBtn = card.querySelector(".delete");
+
+  if (shareBtn) {
+    shareBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      projectToShare = projectId;
+      shareEmailInput.value = "";
+      shareProjectModal.classList.remove("hidden");
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      projectToDelete = projectId;
+      deleteProjectModal.classList.remove("hidden");
+    });
+  }
+
+  projectList.appendChild(card);
 }
 
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("open-btn")) {
-    const id = e.target.dataset.id;
-    window.location.href = `/product-backlog?project=${id}`;
-  }
-});
-
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("share-btn")) {
-    projectToShare = e.target.dataset.id;
-    shareEmailInput.value = "";
-    shareProjectModal.classList.remove("hidden");
-  }
-});
-
+/* SHARE PROJECT */
 cancelShareBtn.onclick = () => {
   projectToShare = null;
   shareProjectModal.classList.add("hidden");
@@ -114,18 +132,14 @@ confirmShareBtn.onclick = async () => {
   if (!projectToShare) return;
   const ident = shareEmailInput.value.trim();
   if (!ident) return;
+
   await sendShareRequest(projectToShare, ident);
+
   shareProjectModal.classList.add("hidden");
   projectToShare = null;
 };
 
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("delete-btn")) {
-    projectToDelete = e.target.dataset.id;
-    deleteProjectModal.classList.remove("hidden");
-  }
-});
-
+/* DELETE PROJECT */
 cancelDeleteProjectBtn.onclick = () => {
   projectToDelete = null;
   deleteProjectModal.classList.add("hidden");
@@ -133,12 +147,15 @@ cancelDeleteProjectBtn.onclick = () => {
 
 confirmDeleteProjectBtn.onclick = async () => {
   if (!projectToDelete) return;
+
   await deleteDoc(doc(db, "projects", projectToDelete));
+
   deleteProjectModal.classList.add("hidden");
   projectToDelete = null;
   loadProjects();
 };
 
+/* CREATE PROJECT */
 openCreateProjectBtn.onclick = () => {
   projectNameInput.value = "";
   createProjectModal.classList.remove("hidden");
