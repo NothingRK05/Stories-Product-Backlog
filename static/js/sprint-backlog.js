@@ -138,32 +138,36 @@ document.querySelectorAll("#sortMenu div").forEach(option => {
 });
 
 function sortStories() {
-  if (!stories || stories.length === 0) return;
+  const rows = Array.from(tbody.querySelectorAll("tr"));
 
-  stories.sort((a, b) => {
+  const sorted = rows.sort((rowA, rowB) => {
+    const get = (row, index) => row.children[index].innerText.trim();
+
     switch (currentSort) {
       case "id":
-        return a.id.localeCompare(b.id);
+        return get(rowA, 0).localeCompare(get(rowB, 0));
 
       case "priority":
-        return (a.priority || 0) - (b.priority || 0);
+        return Number(get(rowA, 2)) - Number(get(rowB, 2));
 
       case "estimate":
-        return (a.estimate || 0) - (b.estimate || 0);
+        return Number(get(rowA, 3)) - Number(get(rowB, 3));
 
       case "spike":
-        return (a.spike === "Yes" ? 1 : 0) - (b.spike === "Yes" ? 1 : 0);
+        return (get(rowA, 4) === "Yes" ? 1 : 0) - (get(rowB, 4) === "Yes" ? 1 : 0);
 
       case "status":
-        return a.status.localeCompare(b.status);
+        return get(rowA, 5).localeCompare(get(rowB, 5));
 
       case "assigned":
-        return (a.assignment || "").localeCompare(b.assignment || "");
+        return get(rowA, 6).localeCompare(get(rowB, 6));
 
       default:
         return 0;
     }
   });
 
-  renderStories();
+  // Clear and re-append sorted rows
+  tbody.innerHTML = "";
+  sorted.forEach(r => tbody.appendChild(r));
 }
