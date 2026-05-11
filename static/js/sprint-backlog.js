@@ -188,13 +188,15 @@ function sortStories() {
         return get(rowA, 0).localeCompare(get(rowB, 0));
 
       case "priority":
-        return Number(get(rowA, 2)) - Number(get(rowB, 2));
+        return Number(get(rowB, 2)) - Number(get(rowA, 2));
 
       case "estimate":
         return Number(get(rowA, 3)) - Number(get(rowB, 3));
 
       case "spike":
-        return (get(rowA, 4) === "Yes" ? 1 : 0) - (get(rowB, 4) === "Yes" ? 1 : 0);
+        const aSpike = get(rowA, 4) === "Yes" ? 1 : 0;
+        const bSpike = get(rowB, 4) === "Yes" ? 1 : 0;
+        return bSpike - aSpike;
 
       case "status":
         return get(rowA, 5).localeCompare(get(rowB, 5));
@@ -208,5 +210,79 @@ function sortStories() {
   });
 
   tbody.innerHTML = "";
-  sorted.forEach((r) => tbody.appendChild(r));
+  sorted.forEach(r => tbody.appendChild(r));
+}
+
+// ---------------------------------------------------------
+// COMPLETE SPRINT
+// ---------------------------------------------------------
+
+document.getElementById("completeSprintBtn").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  // Convert DOM rows → story objects
+  const sprintStories = rows.map(row => {
+    return {
+      storyId: row.children[0].innerText.trim(),
+      description: row.children[1].innerText.trim(),
+      priority: row.children[2].innerText.trim(),
+      estimate: row.children[3].innerText.replace(" hrs", "").trim(),
+      spike: row.children[4].innerText.trim(),
+      status: row.children[5].innerText.trim(),
+      assignment: row.children[6].innerText.trim()
+    };
+  });
+
+  await exportSprintToPDF(sprintStories);
+  await completeSprint(user.uid, sprintStories);
+
+  alert("Sprint completed");
+  loadSprintStories(user.uid);
+});
+
+async function exportSprintToPDF(stories) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Sprint Report", 14, 20);
+
+  doc.setFontSize(12);
+  let y = 35;
+
+  stories.forEach(s => {
+    doc.text(`ID: ${s.storyId}`, 14, y); y += 6;
+    doc.text(`Description: ${s.description}`, 14, y); y += 6;
+    doc.text(`Priority: ${s.priority} | Estimate: ${s.estimate}h`, 14, y); y += 6;
+    doc.text(`Spike: ${s.spike} | Status: ${s.status}`, 14, y); y += 10;
+
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+  });
+
+  doc.save("sprint-report.pdf");
+}
+
+async function completeSprint(uid, stories) {
+  for (const s of stories) {
+    const sprintRef = doc(db, `users/${uid}/sprint-backlog/${s.storyId}`);
+
+    if (s.status === "Ready") {
+      await deleteDoc(sprintRef);
+    } else {
+      const productRef = doc(db, `users/${uid}/product-backlog/${s.storyId}`);
+
+      await setDoc(productRef, {
+        ...s,
+        movedBackAt: Date.now()
+      });
+
+      await deleteDoc(sprintRef);
+    }
+  }
 }
