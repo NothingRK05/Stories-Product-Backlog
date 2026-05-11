@@ -3,28 +3,17 @@ import {
   collection,
   doc,
   getDocs,
-  getDoc,
-  setDoc,
+  addDoc,
+  updateDoc,
   deleteDoc,
-  query,
-  orderBy
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { showLoading, hideLoading } from "./loading.js";
 
-// ---------------------------------------------------------
-// URL + DOM
-// ---------------------------------------------------------
-const params = new URLSearchParams(window.location.search);
-const projectId = params.get("project");
-
-if (!projectId) console.error("❌ No projectId in URL");
-
-let currentUserUid = null;
-let hasLoaded = false;
-
 const storyList = document.getElementById("storyList");
-const modal = document.getElementById("createModal");
+const createModal = document.getElementById("createModal");
 const deleteModal = document.getElementById("deleteModal");
 
 const priorityInput = document.getElementById("priorityInput");
@@ -34,302 +23,304 @@ const descriptionInput = document.getElementById("descriptionInput");
 const spikeInput = document.getElementById("spikeInput");
 const statusInput = document.getElementById("statusInput");
 
+const openCreateModalBtn = document.getElementById("openCreateModal");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const saveStoryBtn = document.getElementById("saveStoryBtn");
+
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+
+const sortBtn = document.getElementById("sortBtn");
+const sortMenu = document.getElementById("sortMenu");
+
+const params = new URLSearchParams(window.location.search);
+const projectId = params.get("project");
+
+let currentUid = null;
 let storyToDelete = null;
+let storyToEdit = null;
+let currentSort = "id";
 
-// ---------------------------------------------------------
-// BASE PATH
-// ---------------------------------------------------------
-function basePath() {
-  return `projects/${projectId}`;
-}
+/* ============================================================
+   AUTH + ACCESS CHECK
+   ============================================================ */
 
-// ---------------------------------------------------------
-// AUTH
-// ---------------------------------------------------------
 onAuthStateChanged(auth, async (user) => {
   if (!user || !projectId) return;
+  currentUid = user.uid;
 
-  currentUserUid = user.uid;
+  const projectRef = doc(db, "projects", projectId);
+  const projectSnap = await getDoc(projectRef);
 
-  if (!hasLoaded) {
-    hasLoaded = true;
-    loadStories();
+  if (!projectSnap.exists()) {
+    alert("Project not found.");
+    window.location.href = "/projects";
+    return;
+  }
+
+  const project = projectSnap.data();
+
+  if (project.ownerUid !== currentUid &&
+      !(project.sharedWith || []).includes(currentUid)) {
+    alert("You do not have access to this project.");
+    window.location.href = "/projects";
+    return;
+  }
+
+  await loadStories();
+});
+
+/* ============================================================
+   LOAD STORIES
+   ============================================================ */
+
+async function loadStories() {
+  showLoading();
+  storyList.innerHTML = "";
+
+  const colRef = collection(db, "projects", projectId, "product-backlog");
+  const snap = await getDocs(colRef);
+
+  const stories = [];
+  snap.forEach((d) => {
+    if (d.id !== "_placeholder") {
+      stories.push({ id: d.id, ...d.data() });
+    }
+  });
+
+  stories.sort((a, b) => {
+    if (currentSort === "priority") return (a.priority || 0) - (b.priority || 0);
+    if (currentSort === "estimate") return (a.estimate || 0) - (b.estimate || 0);
+    if (currentSort === "status") return (a.status || "").localeCompare(b.status || "");
+    if (currentSort === "assigned") return (a.assigned || "").localeCompare(b.assigned || "");
+    if (currentSort === "spike") return (a.spike || "").localeCompare(b.spike || "");
+    return (a.numericId || 0) - (b.numericId || 0);
+  });
+
+  stories.forEach(addStoryRow);
+  hideLoading();
+}
+
+/* ============================================================
+   RENDER ROW
+   ============================================================ */
+
+function addStoryRow(story) {
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td>${story.numericId || ""}</td>
+    <td>${story.description || ""}</td>
+    <td>${story.priority || ""}</td>
+    <td>${story.estimate || ""}</td>
+    <td>${story.spike || ""}</td>
+    <td>${story.status || ""}</td>
+    <td>${story.assigned || ""}</td>
+
+    <td class="story-actions-cell">
+      <div class="story-menu-wrapper">
+        <div class="story-menu-icon" data-id="${story.id}">⋮</div>
+
+        <div class="story-menu hidden" id="menu-${story.id}">
+          <div class="story-menu-item" data-action="edit" data-id="${story.id}">Edit</div>
+          <div class="story-menu-item" data-action="move" data-id="${story.id}">Move to Sprint Backlog</div>
+          <div class="story-menu-item" data-action="delete" data-id="${story.id}">Delete</div>
+        </div>
+      </div>
+    </td>
+  `;
+
+  storyList.appendChild(tr);
+}
+
+/* ============================================================
+   3-DOTS MENU
+   ============================================================ */
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("story-menu-icon")) {
+    const id = e.target.dataset.id;
+    const menu = document.getElementById(`menu-${id}`);
+    menu.classList.toggle("hidden");
+    return;
+  }
+
+  document.querySelectorAll(".story-menu").forEach((m) => {
+    if (!m.contains(e.target)) m.classList.add("hidden");
+  });
+});
+
+/* ============================================================
+   MENU ACTIONS
+   ============================================================ */
+
+document.addEventListener("click", async (e) => {
+  if (!e.target.classList.contains("story-menu-item")) return;
+
+  const action = e.target.dataset.action;
+  const id = e.target.dataset.id;
+
+  if (action === "edit") {
+    document.querySelectorAll(".story-menu").forEach(m => m.classList.add("hidden"));
+    openEditModal(id);
+  }
+
+  if (action === "move") {
+    await moveStoryToSprint(id);
+  }
+
+  if (action === "delete") {
+    document.querySelectorAll(".story-menu").forEach(m => m.classList.add("hidden"));
+    storyToDelete = id;
+    deleteModal.classList.remove("hidden");
   }
 });
 
-// ---------------------------------------------------------
-// MODAL HANDLERS
-// ---------------------------------------------------------
-document.getElementById("openCreateModal").onclick = () => {
-  resetModal();
-  modal.classList.remove("hidden");
-};
+/* ============================================================
+   DELETE STORY
+   ============================================================ */
 
-document.getElementById("closeModalBtn").onclick = () => {
-  modal.classList.add("hidden");
-};
-
-document.getElementById("cancelDeleteBtn").onclick = () => {
-  storyToDelete = null;
-  deleteModal.classList.add("hidden");
-};
-
-document.getElementById("confirmDeleteBtn").onclick = async () => {
+confirmDeleteBtn.onclick = async () => {
   if (!storyToDelete) return;
 
-  await deleteDoc(doc(db, `${basePath()}/product-backlog/${storyToDelete}`));
+  await deleteDoc(doc(db, "projects", projectId, "product-backlog", storyToDelete));
 
   deleteModal.classList.add("hidden");
   storyToDelete = null;
   loadStories();
 };
 
-// ---------------------------------------------------------
-// RESET MODAL
-// ---------------------------------------------------------
-function resetModal() {
-  document.querySelector(".story-modal h3").textContent = "Create User Story";
+cancelDeleteBtn.onclick = () => {
+  storyToDelete = null;
+  deleteModal.classList.add("hidden");
+};
 
+/* ============================================================
+   CREATE / EDIT STORY
+   ============================================================ */
+
+openCreateModalBtn.onclick = () => {
+  storyToEdit = null;
   priorityInput.value = "";
   estimateInput.value = "";
   assignmentInput.value = "";
   descriptionInput.value = "";
   spikeInput.value = "No";
   statusInput.value = "Not Ready";
+  createModal.classList.remove("hidden");
+};
 
-  document.getElementById("saveStoryBtn").onclick = () => {
-    saveStory();
-  };
-}
+closeModalBtn.onclick = () => {
+  createModal.classList.add("hidden");
+};
 
-// ---------------------------------------------------------
-// NEXT STORY ID
-// ---------------------------------------------------------
-async function getNextStoryId() {
-  const projectRef = doc(db, `projects/${projectId}`);
-  const snap = await getDoc(projectRef);
+saveStoryBtn.onclick = async () => {
+  const priority = Number(priorityInput.value || 0);
+  const estimate = Number(estimateInput.value || 0);
+  const assigned = assignmentInput.value.trim();
+  const description = descriptionInput.value.trim();
+  const spike = spikeInput.value;
+  const status = statusInput.value;
 
-  let next = 1;
+  if (!description) return;
 
-  if (snap.exists() && snap.data().latestStoryId) {
-    next = Number(snap.data().latestStoryId) + 1;
-  }
+  const colRef = collection(db, "projects", projectId, "product-backlog");
 
-  await setDoc(projectRef, { latestStoryId: next }, { merge: true });
+  // EDIT MODE
+  if (storyToEdit) {
+    await updateDoc(doc(db, "projects", projectId, "product-backlog", storyToEdit), {
+      priority,
+      estimate,
+      assigned,
+      description,
+      spike,
+      status
+    });
 
-  return next.toString().padStart(4, "0");
-}
-
-// ---------------------------------------------------------
-// SAVE STORY
-// ---------------------------------------------------------
-async function saveStory() {
-  const storyId = await getNextStoryId();
-
-  const ref = doc(db, `${basePath()}/product-backlog/${storyId}`);
-
-  await setDoc(ref, {
-    storyId,
-    priority: priorityInput.value,
-    estimate: estimateInput.value,
-    assignment: assignmentInput.value,
-    description: descriptionInput.value,
-    spike: spikeInput.value,
-    status: statusInput.value,
-    createdAt: Date.now(),
-    updatedBy: currentUserUid
-  });
-
-  modal.classList.add("hidden");
-  loadStories();
-}
-
-// ---------------------------------------------------------
-// LOAD STORIES
-// ---------------------------------------------------------
-async function loadStories() {
-  showLoading();
-  storyList.innerHTML = "";
-
-  const q = query(
-    collection(db, `${basePath()}/product-backlog`),
-    orderBy("storyId")
-  );
-
-  const snapshot = await getDocs(q);
-
-  snapshot.forEach((docSnap) => {
-    const s = docSnap.data();
-    if (s.storyId === "_init") return;
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${s.storyId}</td>
-      <td>${s.description}</td>
-      <td>${s.priority}</td>
-      <td>${s.estimate} hrs</td>
-      <td>${s.spike}</td>
-      <td>${s.status}</td>
-      <td>${s.assignment}</td>
-      <td style="position:relative; width:40px; text-align:right;">
-        <button class="menu-btn" type="button">⋮</button>
-        <div class="menu-dropdown hidden">
-          <div class="menu-item edit-item" data-id="${s.storyId}">Edit</div>
-          <div class="menu-item move-item" data-id="${s.storyId}">Move to Sprint Backlog</div>
-          <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
-        </div>
-      </td>
-    `;
-
-    storyList.appendChild(tr);
-  });
-
-  hideLoading();
-}
-
-// ---------------------------------------------------------
-// MOVE STORY TO SPRINT BACKLOG
-// ---------------------------------------------------------
-async function moveStoryToSprintBacklog(storyId) {
-  const sourceRef = doc(db, `${basePath()}/product-backlog/${storyId}`);
-  const targetRef = doc(db, `${basePath()}/sprint-backlog/${storyId}`);
-
-  const snap = await getDoc(sourceRef);
-  if (!snap.exists()) return;
-
-  const data = snap.data();
-
-  await setDoc(targetRef, {
-    ...data,
-    movedAt: Date.now(),
-    movedBy: currentUserUid
-  });
-
-  await deleteDoc(sourceRef);
-
-  loadStories();
-}
-
-// ---------------------------------------------------------
-// MENU HANDLERS
-// ---------------------------------------------------------
-document.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("menu-btn")) {
-    document.querySelectorAll(".menu-dropdown").forEach((m) => m.classList.remove("show"));
+    createModal.classList.add("hidden");
+    storyToEdit = null;
+    loadStories();
     return;
   }
 
-  const dropdown = e.target.nextElementSibling;
-  dropdown.classList.toggle("show");
-});
+  // CREATE MODE
+  const projectRef = doc(db, "projects", projectId);
+  const projectSnap = await getDoc(projectRef);
 
-// Delete
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("delete-item")) {
-    storyToDelete = e.target.dataset.id;
-    deleteModal.classList.remove("hidden");
+  let nextId = 1;
+  if (projectSnap.exists()) {
+    nextId = (projectSnap.data().latestStoryId || 0) + 1;
   }
-});
 
-// Edit
-document.addEventListener("click", async (e) => {
-  if (!e.target.classList.contains("edit-item")) return;
+  await updateDoc(projectRef, { latestStoryId: nextId });
 
-  const storyId = e.target.dataset.id;
-  const ref = doc(db, `${basePath()}/product-backlog/${storyId}`);
+  await addDoc(colRef, {
+    numericId: nextId,
+    priority,
+    estimate,
+    assigned,
+    description,
+    spike,
+    status
+  });
+
+  createModal.classList.add("hidden");
+  loadStories();
+};
+
+/* ============================================================
+   EDIT STORY MODAL
+   ============================================================ */
+
+async function openEditModal(storyId) {
+  const ref = doc(db, "projects", projectId, "product-backlog", storyId);
   const snap = await getDoc(ref);
-
   if (!snap.exists()) return;
 
   const s = snap.data();
 
+  storyToEdit = storyId;
+
   priorityInput.value = s.priority || "";
   estimateInput.value = s.estimate || "";
-  assignmentInput.value = s.assignment || "";
+  assignmentInput.value = s.assigned || "";
   descriptionInput.value = s.description || "";
   spikeInput.value = s.spike || "No";
   statusInput.value = s.status || "Not Ready";
 
-  document.querySelector(".story-modal h3").textContent = "Edit User Story";
-
-  document.getElementById("saveStoryBtn").onclick = async () => {
-    await setDoc(ref, {
-      storyId,
-      priority: priorityInput.value,
-      estimate: estimateInput.value,
-      assignment: assignmentInput.value,
-      description: descriptionInput.value,
-      spike: spikeInput.value,
-      status: statusInput.value,
-      updatedAt: Date.now(),
-      updatedBy: currentUserUid
-    });
-
-    modal.classList.add("hidden");
-    loadStories();
-  };
-
-  modal.classList.remove("hidden");
-});
-
-// Move
-document.addEventListener("click", async (e) => {
-  if (!e.target.classList.contains("move-item")) return;
-
-  const storyId = e.target.dataset.id;
-  await moveStoryToSprintBacklog(storyId);
-});
-
-// ---------------------------------------------------------
-// SORTING
-// ---------------------------------------------------------
-let currentSort = null;
-
-document.getElementById("sortBtn").addEventListener("click", () => {
-  document.getElementById("sortMenu").classList.toggle("hidden");
-});
-
-document.querySelectorAll("#sortMenu div").forEach(option => {
-  option.addEventListener("click", () => {
-    currentSort = option.dataset.sort;
-    sortStories();
-    document.getElementById("sortMenu").classList.add("hidden");
-  });
-});
-
-function sortStories() {
-  const rows = Array.from(storyList.querySelectorAll("tr"));
-
-  const sorted = rows.sort((rowA, rowB) => {
-    const get = (row, index) => row.children[index].innerText.trim();
-
-    switch (currentSort) {
-      case "id":
-        return get(rowA, 0).localeCompare(get(rowB, 0));
-
-      case "priority":
-        return Number(get(rowB, 2)) - Number(get(rowA, 2));
-
-      case "estimate":
-        return Number(get(rowA, 3)) - Number(get(rowB, 3));
-
-      case "spike":
-        const aSpike = get(rowA, 4) === "Yes" ? 1 : 0;
-        const bSpike = get(rowB, 4) === "Yes" ? 1 : 0;
-        return bSpike - aSpike;
-
-      case "status":
-        return get(rowA, 5).localeCompare(get(rowB, 5));
-
-      case "assigned":
-        return get(rowA, 6).localeCompare(get(rowB, 6));
-
-      default:
-        return 0;
-    }
-  });
-
-  storyList.innerHTML = "";
-  sorted.forEach(r => storyList.appendChild(r));
+  createModal.classList.remove("hidden");
 }
+
+/* ============================================================
+   MOVE TO SPRINT BACKLOG
+   ============================================================ */
+
+async function moveStoryToSprint(storyId) {
+  const ref = doc(db, "projects", projectId, "product-backlog", storyId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const story = snap.data();
+
+  await addDoc(collection(db, "projects", projectId, "sprint-backlog"), story);
+
+  await deleteDoc(ref);
+
+  loadStories();
+}
+
+/* ============================================================
+   SORTING
+   ============================================================ */
+
+sortBtn.onclick = () => {
+  sortMenu.classList.toggle("hidden");
+};
+
+sortMenu.addEventListener("click", (e) => {
+  const sort = e.target.dataset.sort;
+  if (!sort) return;
+  currentSort = sort;
+  sortMenu.classList.add("hidden");
+  loadStories();
+});

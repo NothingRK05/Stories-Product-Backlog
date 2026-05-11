@@ -1,99 +1,165 @@
 import { auth, db } from "../js/firebase.js";
+import { showPopup } from "../js/popup.js";
 import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
   collection,
+  doc,
   addDoc,
+  getDoc,
+  getDocs,
   query,
   where,
-  getDocs
+  updateDoc,
+  deleteDoc,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// get project ownerUid if current user has access, else null
-export async function getProjectOwnerUid(projectId, currentUid) {
-  const ref = doc(db, "projects", projectId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
+/* ============================================================
+   SEND SHARE REQUEST
+   ============================================================ */
 
-  const data = snap.data();
-  if (data.ownerUid === currentUid) return data.ownerUid;
-  if (Array.isArray(data.sharedWith) && data.sharedWith.includes(currentUid)) return data.ownerUid;
-  return null;
-}
-
-// send share request to target usernameLower or email
 export async function sendShareRequest(projectId, targetIdentifier) {
   const user = auth.currentUser;
   if (!user) return;
 
+  const senderUid = user.uid;
+  const senderName = user.displayName || "";
+
   const ident = targetIdentifier.trim().toLowerCase();
-  let usernameLower = ident;
-  if (ident.includes("@")) {
-    usernameLower = ident.split("@")[0];
+  if (!ident) {
+    showPopup("Invalid Input", "Please enter a username or email.");
+    return;
   }
 
-  const usernameRef = doc(db, "usernames", usernameLower);
-  const usernameSnap = await getDoc(usernameRef);
-  if (!usernameSnap.exists()) return;
+  let targetUid = null;
+  let targetName = "";
 
-  const targetUid = usernameSnap.data().uid;
-  if (!targetUid || targetUid === user.uid) return;
+  if (ident.includes("@")) {
+    const usernamesCol = collection(db, "usernames");
+    const q = query(usernamesCol, where("email", "==", ident));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      showPopup("User Not Found", "No user exists with that email.");
+      return;
+    }
+
+    const data = snap.docs[0].data();
+    targetUid = data.uid;
+    targetName = data.displayName || "";
+  }
+
+  else {
+    const usernameRef = doc(db, "usernames", ident);
+    const usernameSnap = await getDoc(usernameRef);
+
+    if (!usernameSnap.exists()) {
+      showPopup("User Not Found", "No user exists with that username.");
+      return;
+    }
+
+    const data = usernameSnap.data();
+    targetUid = data.uid;
+    targetName = data.displayName || "";
+  }
+
+  if (!targetUid) {
+    showPopup("Error", "Could not find the target user.");
+    return;
+  }
+
+  if (targetUid === senderUid) {
+    showPopup("Invalid Share", "You cannot share a project with yourself.");
+    return;
+  }
+
+  const projectRef = doc(db, "projects", projectId);
+  const projectSnap = await getDoc(projectRef);
+
+  if (!projectSnap.exists()) {
+    showPopup("Error", "Project not found.");
+    return;
+  }
+
+  const sharedWith = projectSnap.data().sharedWith || [];
+
+  if (sharedWith.includes(targetUid)) {
+    showPopup("Already Shared", `${targetName} already has access to this project.`);
+    return;
+  }
+
+  const reqQuery = query(
+    collection(db, "shareRequests"),
+    where("from", "==", senderUid),
+    where("to", "==", targetUid),
+    where("projectId", "==", projectId)
+  );
+
+  const reqSnap = await getDocs(reqQuery);
+
+  if (!reqSnap.empty) {
+    showPopup("Request Pending", `A share request to ${targetName} is already pending.`);
+    return;
+  }
+
+  const projectName = projectSnap.data().projectName || "(Unnamed Project)";
 
   await addDoc(collection(db, "shareRequests"), {
-    from: user.uid,
+    from: senderUid,
+    fromName: senderName,
     to: targetUid,
+    toName: targetName,
     projectId,
+    projectName,
     createdAt: Date.now()
   });
+
+  showPopup("Request Sent", `A share request has been sent to ${targetName}.`);
 }
 
-// accept share request
+
+/* ============================================================
+   GET INCOMING SHARE REQUESTS
+   ============================================================ */
+
+export async function getIncomingShareRequests(uid) {
+  if (!uid) return [];
+
+  const colRef = collection(db, "shareRequests");
+  const q = query(colRef, where("to", "==", uid));
+  const snap = await getDocs(q);
+
+  return snap.docs.map((d) => ({
+    id: d.id,
+    ...d.data()
+  }));
+}
+
+/* ============================================================
+   ACCEPT SHARE REQUEST
+   ============================================================ */
+
 export async function acceptShareRequest(requestId) {
   const reqRef = doc(db, "shareRequests", requestId);
   const reqSnap = await getDoc(reqRef);
   if (!reqSnap.exists()) return;
 
-  const { from, to, projectId } = reqSnap.data();
+  const { to, projectId } = reqSnap.data();
 
   const projectRef = doc(db, "projects", projectId);
-  const projectSnap = await getDoc(projectRef);
-  if (!projectSnap.exists()) {
-    await deleteDoc(reqRef);
-    return;
-  }
-
-  const projectData = projectSnap.data();
-  const shared = Array.isArray(projectData.sharedWith) ? projectData.sharedWith : [];
-  if (!shared.includes(to)) shared.push(to);
-
-  await updateDoc(projectRef, { sharedWith: shared });
-
-  await setDoc(
-    doc(db, "users", to, "shared-projects", projectId),
-    {
-      projectId,
-      projectName: projectData.projectName,
-      owner: projectData.owner,
-      ownerUid: projectData.ownerUid,
-      ownerUsernameLower: projectData.ownerUsernameLower || ""
-    },
-    { merge: true }
-  );
+  await updateDoc(projectRef, {
+    sharedWith: arrayUnion(to)
+  });
 
   await deleteDoc(reqRef);
+
+  window.location.href = "/projects";
 }
 
-// decline share request
+/* ============================================================
+   DECLINE SHARE REQUEST
+   ============================================================ */
+
 export async function declineShareRequest(requestId) {
-  await deleteDoc(doc(db, "shareRequests", requestId));
-}
-
-// get incoming share requests for a user
-export async function getIncomingShareRequests(uid) {
-  const q = query(collection(db, "shareRequests"), where("to", "==", uid));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const reqRef = doc(db, "shareRequests", requestId);
+  await deleteDoc(reqRef);
 }

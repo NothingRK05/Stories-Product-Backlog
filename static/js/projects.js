@@ -5,12 +5,15 @@ import {
   getDocs,
   getDoc,
   setDoc,
+  updateDoc,
   deleteDoc,
   query,
-  where
+  where,
+  arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { showPopup } from "./popup.js";
 import { showLoading, hideLoading } from "./loading.js";
 import { sendShareRequest } from "./sharing.js";
 import { currentUserInfo } from "./auth-state.js";
@@ -38,11 +41,19 @@ let currentUserUid = null;
 let projectToDelete = null;
 let projectToShare = null;
 
+/* ============================================================
+   AUTH + LOAD PROJECTS
+   ============================================================ */
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   currentUserUid = user.uid;
   await loadProjects();
 });
+
+/* ============================================================
+   LOAD PROJECTS (OWNER + SHARED)
+   ============================================================ */
 
 async function loadProjects() {
   if (!currentUserUid) return;
@@ -50,7 +61,6 @@ async function loadProjects() {
   showLoading();
   projectList.innerHTML = "";
 
-  // Owned projects
   const ownedQuery = query(
     collection(db, "projects"),
     where("ownerUid", "==", currentUserUid)
@@ -59,46 +69,53 @@ async function loadProjects() {
 
   ownedSnap.forEach((docSnap) => {
     const p = docSnap.data();
-    addProjectCard(docSnap.id, p.projectName, true);
+    addProjectCard(docSnap.id, p.projectName, true, p.owner);
   });
 
-  // Shared projects
-  const sharedSnap = await getDocs(
-    collection(db, "users", currentUserUid, "shared-projects")
+  const sharedQuery = query(
+    collection(db, "projects"),
+    where("sharedWith", "array-contains", currentUserUid)
   );
+  const sharedSnap = await getDocs(sharedQuery);
 
   sharedSnap.forEach((docSnap) => {
     const p = docSnap.data();
-    addProjectCard(docSnap.id, p.projectName, false);
+    addProjectCard(docSnap.id, p.projectName, false, p.owner);
   });
 
   hideLoading();
 }
 
-function addProjectCard(projectId, name, isOwner) {
+/* ============================================================
+   PROJECT CARD
+   ============================================================ */
+
+function addProjectCard(projectId, name, isOwner, ownerName) {
   const card = document.createElement("div");
   card.classList.add("project-card");
+
+  const typeLabel = isOwner ? "Owner" : `Shared by: ${ownerName}`;
 
   card.innerHTML = `
     <div class="project-info">
       <h3 class="project-name">${name}</h3>
-      <p class="project-type">${isOwner ? "Owner" : "Shared"}</p>
+      <p class="project-type">${typeLabel}</p>
     </div>
 
     <div class="project-actions">
       ${isOwner ? `
         <button class="project-btn share">Share</button>
         <button class="project-btn delete">Delete</button>
-      ` : ""}
+      ` : `
+        <button class="project-btn leave">Leave Project</button>
+      `}
     </div>
   `;
 
-  // Clicking the card opens the project
   card.addEventListener("click", () => {
     window.location.href = `/product-backlog?project=${projectId}`;
   });
 
-  // Prevent card click when pressing Share/Delete
   const shareBtn = card.querySelector(".share");
   const deleteBtn = card.querySelector(".delete");
 
@@ -119,10 +136,48 @@ function addProjectCard(projectId, name, isOwner) {
     });
   }
 
+  const leaveBtn = card.querySelector(".leave");
+  if (leaveBtn) {
+    leaveBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      showPopup(
+        "Leave Project?",
+        "Are you sure you want to leave this project? You will lose access."
+      );
+
+      const closeBtn = document.getElementById("popupCloseBtn");
+      closeBtn.onclick = async () => {
+        document.getElementById("customPopup").classList.add("hidden");
+        await leaveProject(projectId);
+      };
+    });
+  }
+
   projectList.appendChild(card);
 }
 
-/* SHARE PROJECT */
+/* ============================================================
+   LEAVE PROJECT
+   ============================================================ */
+
+async function leaveProject(projectId) {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const projectRef = doc(db, "projects", projectId);
+
+  await updateDoc(projectRef, {
+    sharedWith: arrayRemove(user.uid)
+  });
+
+  window.location.href = "/projects";
+}
+
+/* ============================================================
+   SHARE PROJECT
+   ============================================================ */
+
 cancelShareBtn.onclick = () => {
   projectToShare = null;
   shareProjectModal.classList.add("hidden");
@@ -139,7 +194,10 @@ confirmShareBtn.onclick = async () => {
   projectToShare = null;
 };
 
-/* DELETE PROJECT */
+/* ============================================================
+   DELETE PROJECT
+   ============================================================ */
+
 cancelDeleteProjectBtn.onclick = () => {
   projectToDelete = null;
   deleteProjectModal.classList.add("hidden");
@@ -155,7 +213,10 @@ confirmDeleteProjectBtn.onclick = async () => {
   loadProjects();
 };
 
-/* CREATE PROJECT */
+/* ============================================================
+   CREATE PROJECT
+   ============================================================ */
+
 openCreateProjectBtn.onclick = () => {
   projectNameInput.value = "";
   createProjectModal.classList.remove("hidden");
@@ -187,7 +248,16 @@ saveProjectBtn.onclick = async () => {
     owner: displayName,
     ownerUid: user.uid,
     ownerUsernameLower: usernameLower,
+    latestStoryId: 0,
     sharedWith: []
+  });
+
+  await setDoc(doc(db, "projects", newRef.id, "product-backlog", "_placeholder"), {
+    placeholder: true
+  });
+
+  await setDoc(doc(db, "projects", newRef.id, "sprint-backlog", "_placeholder"), {
+    placeholder: true
   });
 
   createProjectModal.classList.add("hidden");

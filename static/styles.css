@@ -448,6 +448,60 @@ html[data-theme="light"] .story-table td {
 }
 
 /* ============================================================
+   STORY ACTIONS (3-DOTS MENU)
+   ============================================================ */
+
+.story-actions-cell {
+  position: relative;
+  text-align: right;
+}
+
+.story-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.story-menu-icon {
+  font-size: 22px;
+  color: var(--purple-light);
+  cursor: pointer;
+  padding: 6px 10px; /* invisible hitbox */
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+.story-menu-icon:hover {
+  background: rgba(143, 123, 255, 0.15);
+}
+
+.story-menu {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  width: 180px;
+  z-index: 5000;
+}
+
+.story-menu.hidden {
+  display: none;
+}
+
+.story-menu-item {
+  padding: 12px;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: var(--transition);
+}
+
+.story-menu-item:hover {
+  background: #333;
+  color: var(--purple-light);
+}
+
+/* ============================================================
    MODALS
    ============================================================ */
 
