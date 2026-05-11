@@ -5,6 +5,7 @@ import {
 import { 
   getAuth, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getProjectOwner } from "../js/sharing.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDcWb980e-FXMugxnx6jE1CZB3WrVFw4-4",
@@ -22,6 +23,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 let hasLoaded = false;
+let ownerUid = null;
 
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("project");
@@ -30,13 +32,6 @@ if (!projectId) {
   console.error("❌ No projectId found in URL. Sprint backlog cannot load.");
 }
 
-onAuthStateChanged(auth, user => {
-  if (user && !hasLoaded && projectId) {
-    hasLoaded = true;
-    loadSprintStories(user.uid, projectId);
-  }
-});
-
 const tbody = document.getElementById("storyList");
 const deleteModal = document.getElementById("deleteModal");
 const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
@@ -44,23 +39,48 @@ const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
 
 let storyToDelete = null;
 
+/* ---------------------------------------------------------
+   AUTH + PERMISSION CHECK
+--------------------------------------------------------- */
+onAuthStateChanged(auth, async user => {
+  if (!user || !projectId) return;
+
+  ownerUid = await getProjectOwner(projectId, user.uid);
+
+  if (!ownerUid) {
+    alert("You do not have permission to access this project.");
+    window.location.href = "/projects";
+    return;
+  }
+
+  if (!hasLoaded) {
+    hasLoaded = true;
+    loadSprintStories(ownerUid, projectId);
+  }
+});
+
+/* ---------------------------------------------------------
+   DELETE MODAL
+--------------------------------------------------------- */
 cancelDeleteBtn.onclick = () => {
   storyToDelete = null;
   deleteModal.classList.add("hidden");
 };
 
 confirmDeleteBtn.onclick = async () => {
-  if (!storyToDelete) return;
-  const user = auth.currentUser;
+  if (!storyToDelete || !ownerUid) return;
 
-  const base = `users/${user.uid}/projects/${projectId}`;
+  const base = `users/${ownerUid}/projects/${projectId}`;
   await deleteDoc(doc(db, `${base}/sprint-backlog/${storyToDelete}`));
 
   deleteModal.classList.add("hidden");
   storyToDelete = null;
-  loadSprintStories(user.uid, projectId);
+  loadSprintStories(ownerUid, projectId);
 };
 
+/* ---------------------------------------------------------
+   LOAD SPRINT STORIES
+--------------------------------------------------------- */
 async function loadSprintStories(uid, projectId) {
   tbody.innerHTML = "";
 
@@ -70,6 +90,8 @@ async function loadSprintStories(uid, projectId) {
 
   snapshot.forEach(docSnap => {
     const s = docSnap.data();
+
+    if (s.storyId === "_init") return;
 
     const tr = document.createElement("tr");
 
@@ -95,6 +117,9 @@ async function loadSprintStories(uid, projectId) {
   });
 }
 
+/* ---------------------------------------------------------
+   MENU + ACTION HANDLERS
+--------------------------------------------------------- */
 document.addEventListener("click", e => {
   if (!e.target.classList.contains("menu-btn")) {
     document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.remove("show"));
@@ -114,10 +139,11 @@ document.addEventListener("click", e => {
 
 document.addEventListener("click", async e => {
   if (e.target.classList.contains("mark-ready")) {
-    const storyId = e.target.dataset.id;
-    const user = auth.currentUser;
+    if (!ownerUid) return;
 
-    const base = `users/${user.uid}/projects/${projectId}`;
+    const storyId = e.target.dataset.id;
+
+    const base = `users/${ownerUid}/projects/${projectId}`;
     const ref = doc(db, `${base}/sprint-backlog/${storyId}`);
     const snap = await getDoc(ref);
     if (!snap.exists()) return;
@@ -130,10 +156,13 @@ document.addEventListener("click", async e => {
       updatedAt: Date.now()
     });
 
-    loadSprintStories(user.uid, projectId);
+    loadSprintStories(ownerUid, projectId);
   }
 });
 
+/* ---------------------------------------------------------
+   SORTING
+--------------------------------------------------------- */
 let currentSort = null;
 
 document.getElementById("sortBtn").addEventListener("click", () => {
@@ -178,7 +207,6 @@ function sortStories() {
     }
   });
 
-  // Clear and re-append sorted rows
   tbody.innerHTML = "";
   sorted.forEach(r => tbody.appendChild(r));
 }
