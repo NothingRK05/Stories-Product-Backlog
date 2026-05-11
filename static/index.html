@@ -3,20 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
   <title>Stories</title>
 </head>
 <body>
-
   <header class="header">
-    <a href="/#" class="logo">Stories</a>
-
+    <a href="/" class="logo">Stories</a>
     <div class="nav-right" id="authArea"></div>
   </header>
 
   <div class="container">
     <h2 class="title">Welcome to Stories!</h2>
-
     <p class="subtitle">Add your user stories now!</p>
 
     <div class="auth-buttons">
@@ -32,7 +29,7 @@
     <p>
       What if you had one place to easily add, edit, and remove user stories to your product backlog? Need a way to easily move user stories in and out of your 
       sprint backlog? Welcome to Stories! The only place you'll need to manage your user stories for any project you have! For more information, visit our 
-      <a href=/about>About Page</a>.
+      <a href="/about">About Page</a>.
     </p>
   </div>
 
@@ -76,28 +73,27 @@
     </p>
   </div>
 
-<script type="module" src="../js/firebase.js"></script>
-<script type="module" src="../js/auth-state.js"></script>
-
-<script>
-  auth.onAuthStateChanged((user) => {
-    if (user) {
-      window.location.href = "/projects";
-    }
-  });
-</script>
-<script>
-  // Wake backend server on page load
-  window.addEventListener('load', () => {
-    fetch('https://back--stories-dec4a.us-east4.hosted.app/ping')
-      .then(response => response.json())
-      .then(data => {
-        console.log('Backend awake:', data);
-      })
-      .catch(error => {
-        console.error('Ping failed:', error);
-      });
-  });
-</script>
+  <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/auth-state.js"></script>
+  <script type="module">
+    import { auth } from "/js/firebase.js";
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        window.location.href = "/projects";
+      }
+    });
+  </script>
+  <script>
+    window.addEventListener('load', () => {
+      fetch('https://back--stories-dec4a.us-east4.hosted.app/ping')
+        .then(response => response.json())
+        .then(data => {
+          console.log('Backend awake:', data);
+        })
+        .catch(error => {
+          console.error('Ping failed:', error);
+        });
+    });
+  </script>
 </body>
 </html>

@@ -1,98 +1,80 @@
-import { auth, db } from "./firebase.js";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getIncomingShareRequests, acceptShareRequest, declineShareRequest } from "./sharing.js";
 
 const inboxIcon = document.getElementById("inboxIcon");
+const inboxBadge = document.getElementById("inboxBadge");
 const inboxPanel = document.getElementById("inboxPanel");
 const inboxList = document.getElementById("inboxList");
-const inboxBadge = document.getElementById("inboxBadge");
 
+let currentUid = null;
 let inboxOpen = false;
 
-inboxIcon.onclick = () => {
-  inboxOpen = !inboxOpen;
-  inboxPanel.classList.toggle("hidden", !inboxOpen);
-};
-
-document.addEventListener("click", (e) => {
-  if (!inboxIcon.contains(e.target) && !inboxPanel.contains(e.target)) {
-    inboxPanel.classList.add("hidden");
-    inboxOpen = false;
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    currentUid = null;
+    if (inboxBadge) inboxBadge.classList.add("hidden");
+    if (inboxPanel) inboxPanel.classList.add("hidden");
+    return;
   }
+  currentUid = user.uid;
+  await refreshInbox();
 });
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) return;
+async function refreshInbox() {
+  if (!currentUid || !inboxList) return;
+  const requests = await getIncomingShareRequests(currentUid);
 
-  const q = query(
-    collection(db, "shareRequests"),
-    where("to", "==", user.uid),
-    where("status", "==", "pending")
-  );
+  inboxList.innerHTML = "";
+  if (requests.length === 0) {
+    inboxList.innerHTML = `<p class="empty-text">No share requests.</p>`;
+    if (inboxBadge) inboxBadge.classList.add("hidden");
+    return;
+  }
 
-  onSnapshot(q, (snapshot) => {
-    inboxList.innerHTML = "";
-
-    if (snapshot.empty) {
-      inboxBadge.classList.add("hidden");
-      inboxList.innerHTML = "<p>No pending requests</p>";
-      return;
-    }
-
+  if (inboxBadge) {
+    inboxBadge.textContent = requests.length;
     inboxBadge.classList.remove("hidden");
-    inboxBadge.textContent = snapshot.size;
+  }
 
-    snapshot.forEach((docSnap) => {
-      const req = docSnap.data();
-
-      const div = document.createElement("div");
-      div.classList.add("request-item");
-
-      div.innerHTML = `
-        <strong>${req.projectName}</strong>
-        <p>Shared by: ${req.fromName}</p>
-        <div class="request-actions">
-          <button class="btn accept-btn" data-id="${docSnap.id}">Accept</button>
-          <button class="btn cancel-btn decline-btn" data-id="${docSnap.id}">Decline</button>
-        </div>
-      `;
-
-      inboxList.appendChild(div);
-    });
+  requests.forEach((req) => {
+    const item = document.createElement("div");
+    item.classList.add("inbox-item");
+    item.innerHTML = `
+      <div class="inbox-text">
+        <span>Project share request for <strong>${req.projectId}</strong></span>
+      </div>
+      <div class="inbox-actions">
+        <button class="btn accept-btn" data-id="${req.id}">Accept</button>
+        <button class="btn cancel-btn decline-btn" data-id="${req.id}">Decline</button>
+      </div>
+    `;
+    inboxList.appendChild(item);
   });
-});
+}
+
+if (inboxIcon) {
+  inboxIcon.onclick = () => {
+    inboxOpen = !inboxOpen;
+    if (!inboxPanel) return;
+    if (inboxOpen) {
+      inboxPanel.classList.remove("hidden");
+      refreshInbox();
+    } else {
+      inboxPanel.classList.add("hidden");
+    }
+  };
+}
 
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("accept-btn")) {
     const id = e.target.dataset.id;
-    const ref = doc(db, "shareRequests", id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
-
-    const req = snap.data();
-
-    const target = doc(db, `users/${req.to}/shared-projects/${req.projectId}`);
-    await setDoc(target, {
-      projectId: req.projectId,
-      projectName: req.projectName,
-      owner: req.from
-    });
-
-    await updateDoc(ref, { status: "accepted" });
+    await acceptShareRequest(id);
+    await refreshInbox();
   }
-
   if (e.target.classList.contains("decline-btn")) {
     const id = e.target.dataset.id;
-    const ref = doc(db, "shareRequests", id);
-    await updateDoc(ref, { status: "declined" });
+    await declineShareRequest(id);
+    await refreshInbox();
   }
 });

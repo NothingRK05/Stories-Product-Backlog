@@ -3,286 +3,134 @@ import {
   collection,
   doc,
   getDocs,
-  getDoc,
-  setDoc,
-  deleteDoc,
-  query,
-  orderBy
+  updateDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getProjectOwner } from "../js/sharing.js";
-import { hideLoading, showLoading } from "./loading.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { showLoading, hideLoading } from "./loading.js";
+import { getProjectOwnerUid } from "./sharing.js";
 
-// ---------------------------------------------------------
-// URL + DOM
-// ---------------------------------------------------------
-let hasLoaded = false;
-let ownerUid = null;
+const storyList = document.getElementById("storyList");
+const deleteModal = document.getElementById("deleteModal");
+
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+
+const sortBtn = document.getElementById("sortBtn");
+const sortMenu = document.getElementById("sortMenu");
+const completeSprintBtn = document.getElementById("completeSprintBtn");
 
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("project");
 
-if (!projectId) {
-  console.error("❌ No projectId found in URL. Sprint backlog cannot load.");
-}
-
-const tbody = document.getElementById("storyList");
-const deleteModal = document.getElementById("deleteModal");
-const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
-
+let currentUid = null;
 let storyToDelete = null;
+let currentSort = "id";
 
-// ---------------------------------------------------------
-// AUTH + PERMISSION CHECK
-// ---------------------------------------------------------
 onAuthStateChanged(auth, async (user) => {
   if (!user || !projectId) return;
+  currentUid = user.uid;
 
-  ownerUid = await getProjectOwner(projectId, user.uid);
-
+  const ownerUid = await getProjectOwnerUid(projectId, currentUid);
   if (!ownerUid) {
-    alert("You do not have permission to access this project.");
+    alert("You do not have access to this project.");
     window.location.href = "/projects";
     return;
   }
 
-  if (!hasLoaded) {
-    hasLoaded = true;
-    loadSprintStories(ownerUid, projectId);
-  }
+  await loadStories();
 });
 
-// ---------------------------------------------------------
-// DELETE MODAL
-// ---------------------------------------------------------
-cancelDeleteBtn.onclick = () => {
-  storyToDelete = null;
-  deleteModal.classList.add("hidden");
-};
-
-confirmDeleteBtn.onclick = async () => {
-  if (!storyToDelete || !ownerUid) return;
-
-  const base = `users/${ownerUid}/projects/${projectId}`;
-  await deleteDoc(doc(db, `${base}/sprint-backlog/${storyToDelete}`));
-
-  deleteModal.classList.add("hidden");
-  storyToDelete = null;
-  loadSprintStories(ownerUid, projectId);
-};
-
-// ---------------------------------------------------------
-// LOAD SPRINT STORIES
-// ---------------------------------------------------------
-async function loadSprintStories(uid, projectId) {
+async function loadStories() {
   showLoading();
+  storyList.innerHTML = "";
 
-  tbody.innerHTML = "";
+  const colRef = collection(db, "projects", projectId, "sprint-backlog");
+  const snap = await getDocs(colRef);
 
-  const base = `users/${uid}/projects/${projectId}`;
-  const q = query(collection(db, `${base}/sprint-backlog`), orderBy("storyId"));
-  const snapshot = await getDocs(q);
+  const stories = [];
+  snap.forEach((d) => stories.push({ id: d.id, ...d.data() }));
 
-  snapshot.forEach((docSnap) => {
-    const s = docSnap.data();
-    if (s.storyId === "_init") return;
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${s.storyId}</td>
-      <td>${s.description}</td>
-      <td>${s.priority}</td>
-      <td>${s.estimate} hrs</td>
-      <td>${s.spike}</td>
-      <td>${s.status}</td>
-      <td>${s.assignment}</td>
-
-      <td style="position:relative; width:40px; text-align:right;">
-        <button class="menu-btn" type="button">⋮</button>
-        <div class="menu-dropdown hidden">
-          <div class="menu-item mark-ready" data-id="${s.storyId}">Mark As Ready</div>
-          <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
-        </div>
-      </td>
-    `;
-
-    tbody.appendChild(tr);
+  stories.sort((a, b) => {
+    if (currentSort === "priority") return (a.priority || 0) - (b.priority || 0);
+    if (currentSort === "estimate") return (a.estimate || 0) - (b.estimate || 0);
+    if (currentSort === "status") return (a.status || "").localeCompare(b.status || "");
+    if (currentSort === "assigned") return (a.assigned || "").localeCompare(b.assigned || "");
+    if (currentSort === "spike") return (a.spike || "").localeCompare(b.spike || "");
+    return (a.numericId || 0) - (b.numericId || 0);
   });
 
+  stories.forEach(addStoryRow);
   hideLoading();
 }
 
-// ---------------------------------------------------------
-// MENU + ACTION HANDLERS
-// ---------------------------------------------------------
-document.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("menu-btn")) {
-    document.querySelectorAll(".menu-dropdown").forEach((m) => m.classList.remove("show"));
-    return;
-  }
+function addStoryRow(story) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${story.numericId || ""}</td>
+    <td>${story.description || ""}</td>
+    <td>${story.priority || ""}</td>
+    <td>${story.estimate || ""}</td>
+    <td>${story.spike || ""}</td>
+    <td>${story.status || ""}</td>
+    <td>${story.assigned || ""}</td>
+    <td style="text-align:right;">
+      <button class="delete-story-btn" data-id="${story.id}">Delete</button>
+    </td>
+  `;
+  storyList.appendChild(tr);
+}
 
-  const dropdown = e.target.nextElementSibling;
-  dropdown.classList.toggle("show");
-});
-
-// Delete
 document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("delete-item")) {
+  if (e.target.classList.contains("delete-story-btn")) {
     storyToDelete = e.target.dataset.id;
     deleteModal.classList.remove("hidden");
   }
 });
 
-// Mark Ready
-document.addEventListener("click", async (e) => {
-  if (!e.target.classList.contains("mark-ready")) return;
-  if (!ownerUid) return;
+confirmDeleteBtn.onclick = async () => {
+  if (!storyToDelete) return;
+  await deleteDoc(doc(db, "projects", projectId, "sprint-backlog", storyToDelete));
+  deleteModal.classList.add("hidden");
+  storyToDelete = null;
+  loadStories();
+};
 
-  const storyId = e.target.dataset.id;
-  const base = `users/${ownerUid}/projects/${projectId}`;
-  const ref = doc(db, `${base}/sprint-backlog/${storyId}`);
+cancelDeleteBtn.onclick = () => {
+  storyToDelete = null;
+  deleteModal.classList.add("hidden");
+};
 
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return;
+sortBtn.onclick = () => {
+  sortMenu.classList.toggle("hidden");
+};
 
-  const data = snap.data();
-
-  await setDoc(ref, {
-    ...data,
-    status: "Ready",
-    updatedAt: Date.now()
-  });
-
-  loadSprintStories(ownerUid, projectId);
+sortMenu.addEventListener("click", (e) => {
+  const sort = e.target.dataset.sort;
+  if (!sort) return;
+  currentSort = sort;
+  sortMenu.classList.add("hidden");
+  loadStories();
 });
 
-// ---------------------------------------------------------
-// SORTING
-// ---------------------------------------------------------
-let currentSort = null;
+completeSprintBtn.onclick = async () => {
+  const colRef = collection(db, "projects", projectId, "sprint-backlog");
+  const snap = await getDocs(colRef);
 
-document.getElementById("sortBtn").addEventListener("click", () => {
-  document.getElementById("sortMenu").classList.toggle("hidden");
-});
-
-document.querySelectorAll("#sortMenu div").forEach((option) => {
-  option.addEventListener("click", () => {
-    currentSort = option.dataset.sort;
-    sortStories();
-    document.getElementById("sortMenu").classList.add("hidden");
-  });
-});
-
-function sortStories() {
-  const rows = Array.from(tbody.querySelectorAll("tr"));
-
-  const sorted = rows.sort((rowA, rowB) => {
-    const get = (row, index) => row.children[index].innerText.trim();
-
-    switch (currentSort) {
-      case "id":
-        return get(rowA, 0).localeCompare(get(rowB, 0));
-
-      case "priority":
-        return Number(get(rowB, 2)) - Number(get(rowA, 2));
-
-      case "estimate":
-        return Number(get(rowA, 3)) - Number(get(rowB, 3));
-
-      case "spike":
-        const aSpike = get(rowA, 4) === "Yes" ? 1 : 0;
-        const bSpike = get(rowB, 4) === "Yes" ? 1 : 0;
-        return bSpike - aSpike;
-
-      case "status":
-        return get(rowA, 5).localeCompare(get(rowB, 5));
-
-      case "assigned":
-        return get(rowA, 6).localeCompare(get(rowB, 6));
-
-      default:
-        return 0;
-    }
-  });
-
-  tbody.innerHTML = "";
-  sorted.forEach(r => tbody.appendChild(r));
-}
-
-// ---------------------------------------------------------
-// COMPLETE SPRINT
-// ---------------------------------------------------------
-
-document.getElementById("completeSprintBtn").addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const rows = Array.from(tbody.querySelectorAll("tr"));
-
-  // Convert DOM rows → story objects
-  const sprintStories = rows.map(row => {
-    return {
-      storyId: row.children[0].innerText.trim(),
-      description: row.children[1].innerText.trim(),
-      priority: row.children[2].innerText.trim(),
-      estimate: row.children[3].innerText.replace(" hrs", "").trim(),
-      spike: row.children[4].innerText.trim(),
-      status: row.children[5].innerText.trim(),
-      assignment: row.children[6].innerText.trim()
-    };
-  });
-
-  await exportSprintToPDF(sprintStories);
-  await completeSprint(user.uid, sprintStories);
-
-  alert("Sprint completed");
-  loadSprintStories(user.uid);
-});
-
-async function exportSprintToPDF(stories) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  doc.setFontSize(18);
-  doc.text("Sprint Report", 14, 20);
-
-  doc.setFontSize(12);
-  let y = 35;
-
-  stories.forEach(s => {
-    doc.text(`ID: ${s.storyId}`, 14, y); y += 6;
-    doc.text(`Description: ${s.description}`, 14, y); y += 6;
-    doc.text(`Priority: ${s.priority} | Estimate: ${s.estimate}h`, 14, y); y += 6;
-    doc.text(`Spike: ${s.spike} | Status: ${s.status}`, 14, y); y += 10;
-
-    if (y > 270) {
-      doc.addPage();
-      y = 20;
-    }
-  });
-
-  doc.save("sprint-report.pdf");
-}
-
-async function completeSprint(uid, stories) {
-  for (const s of stories) {
-    const sprintRef = doc(db, `users/${uid}/sprint-backlog/${s.storyId}`);
-
-    if (s.status === "Ready") {
-      await deleteDoc(sprintRef);
+  const batchUpdates = [];
+  snap.forEach((d) => {
+    const data = d.data();
+    if (data.status === "Done") {
+      batchUpdates.push(deleteDoc(doc(db, "projects", projectId, "sprint-backlog", d.id)));
     } else {
-      const productRef = doc(db, `users/${uid}/product-backlog/${s.storyId}`);
-
-      await setDoc(productRef, {
-        ...s,
-        movedBackAt: Date.now()
-      });
-
-      await deleteDoc(sprintRef);
+      batchUpdates.push(
+        updateDoc(doc(db, "projects", projectId, "sprint-backlog", d.id), {
+          status: "Not Ready"
+        })
+      );
     }
-  }
-}
+  });
+
+  await Promise.all(batchUpdates);
+  loadStories();
+};

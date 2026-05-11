@@ -3,106 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
   <title>My Projects</title>
 </head>
-
 <body>
-
-    <header class="header">
-        <a href="/projects" class="logo">Stories</a>
-
-        <div class="nav-right">
-            <div id="inboxIcon" class="inbox-icon">
-            🔔
-            <span id="inboxBadge" class="inbox-badge hidden"></span>
-            </div>
-
-            <div id="authArea"></div>
-        </div>
-    </header>
-
-    <div id="inboxPanel" class="inbox-panel hidden">
-        <h3>Share Requests</h3>
-        <div id="inboxList" class="inbox-list"></div>
+  <header class="header">
+    <a href="/projects" class="logo">Stories</a>
+    <div class="nav-right">
+      <div id="inboxIcon" class="inbox-icon">
+        🔔
+        <span id="inboxBadge" class="inbox-badge hidden"></span>
+      </div>
+      <div id="authArea"></div>
     </div>
+  </header>
 
-    <div class="container" style="margin-top: 60px;">
-        <h2 class="title">My Projects</h2>
+  <div id="inboxPanel" class="inbox-panel hidden">
+    <h3>Share Requests</h3>
+    <div id="inboxList" class="inbox-list"></div>
+  </div>
 
-        <div style="display:flex; justify-content:center; margin-top:25px;">
-            <button id="openCreateProject" class="btn">Create Project</button>
-        </div>
+  <div class="container" style="margin-top: 60px;">
+    <h2 class="title">My Projects</h2>
+    <div style="display:flex; justify-content:center; margin-top:25px;">
+      <button id="openCreateProject" class="btn">Create Project</button>
     </div>
+  </div>
 
-    <div id="projectList" style="width:100%; margin-bottom:80px;"></div>
+  <div id="projectList" style="width:100%; margin-bottom:80px;"></div>
 
-    <div id="createProjectModal" class="modal hidden">
+  <div id="createProjectModal" class="modal hidden">
     <div class="modal-content story-modal">
-        <h3>Create Project</h3>
-
-        <div class="modal-field">
+      <h3>Create Project</h3>
+      <div class="modal-field">
         <label>Project Name</label>
         <input type="text" id="projectNameInput" />
-        </div>
-
-        <div class="modal-buttons">
+      </div>
+      <div class="modal-buttons">
         <button id="saveProjectBtn" class="btn">Create</button>
         <button id="closeProjectModal" class="btn cancel-btn">Cancel</button>
-        </div>
+      </div>
     </div>
-    </div>
+  </div>
 
-    <div id="deleteProjectModal" class="modal hidden">
+  <div id="deleteProjectModal" class="modal hidden">
     <div class="modal-content delete-modal">
-        <h3>Delete Project</h3>
-        <p>This will permanently delete this project and all its stories.</p>
-
-        <div class="modal-buttons">
+      <h3>Delete Project</h3>
+      <p>This will permanently delete this project and all its stories.</p>
+      <div class="modal-buttons">
         <button id="confirmDeleteProject" class="btn" style="background:#d9534f;">Delete</button>
         <button id="cancelDeleteProject" class="btn cancel-btn">Cancel</button>
-        </div>
+      </div>
     </div>
-    </div>
+  </div>
 
-    <div id="shareProjectModal" class="modal hidden">
+  <div id="shareProjectModal" class="modal hidden">
     <div class="modal-content story-modal">
-        <h3>Share Project</h3>
-
-        <p style="margin-bottom:15px; color:#ccc;">
+      <h3>Share Project</h3>
+      <p style="margin-bottom:15px; color:#ccc;">
         Enter username or email of the user you'd like to share this project with.
-        </p>
-
-        <div class="modal-field">
+      </p>
+      <div class="modal-field">
         <label>Username or Email</label>
         <input type="email" id="shareEmailInput" placeholder="example@email.com" />
-        </div>
-
-        <div class="modal-buttons">
+      </div>
+      <div class="modal-buttons">
         <button id="confirmShareBtn" class="btn">Share</button>
         <button id="cancelShareBtn" class="btn cancel-btn">Cancel</button>
-        </div>
+      </div>
     </div>
-    </div>
+  </div>
 
-    <div id="customPopup" class="popup-overlay hidden">
+  <div id="customPopup" class="popup-overlay hidden">
     <div class="popup-box">
-        <h3 id="popupTitle">Notice</h3>
-        <p id="popupMessage"></p>
-
-        <button id="popupCloseBtn">OK</button>
+      <h3 id="popupTitle">Notice</h3>
+      <p id="popupMessage"></p>
+      <button id="popupCloseBtn">OK</button>
     </div>
-    </div>
+  </div>
 
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="loading-spinner"></div>
-    </div>
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-spinner"></div>
+  </div>
 
-    <script type="module" src="../js/firebase.js"></script>
-    <script type="module" src="../js/auth-state.js"></script>
-    <script type="module" src="../js/inbox.js"></script>
-    <script type="module" src="../js/sharing.js"></script>
-    <script type="module" src="../js/projects.js"></script>
-
+  <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/auth-state.js"></script>
+  <script type="module" src="/js/inbox.js"></script>
+  <script type="module" src="/js/sharing.js"></script>
+  <script type="module" src="/js/projects.js"></script>
 </body>
 </html>

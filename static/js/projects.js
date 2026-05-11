@@ -1,340 +1,178 @@
-import { app, auth, db } from "./firebase.js";
+import { auth, db } from "../js/firebase.js";
 import {
   collection,
   doc,
   getDocs,
   getDoc,
   setDoc,
-  deleteDoc
+  deleteDoc,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { showLoading, hideLoading } from "./loading.js";
 import { sendShareRequest } from "./sharing.js";
-
-/* ---------------------------------------------------------
-   DOM ELEMENTS
---------------------------------------------------------- */
-let hasLoaded = false;
+import { currentUserInfo } from "./auth-state.js";
 
 const projectList = document.getElementById("projectList");
-const loadingOverlay = document.getElementById("loadingOverlay");
 
-const createModal = document.getElementById("createProjectModal");
-const deleteModal = document.getElementById("deleteProjectModal");
-const shareModal = document.getElementById("shareProjectModal");
+const createProjectModal = document.getElementById("createProjectModal");
+const deleteProjectModal = document.getElementById("deleteProjectModal");
+const shareProjectModal = document.getElementById("shareProjectModal");
 
 const projectNameInput = document.getElementById("projectNameInput");
 const shareEmailInput = document.getElementById("shareEmailInput");
 
+const openCreateProjectBtn = document.getElementById("openCreateProject");
+const saveProjectBtn = document.getElementById("saveProjectBtn");
+const closeProjectModalBtn = document.getElementById("closeProjectModal");
+
+const confirmDeleteProjectBtn = document.getElementById("confirmDeleteProject");
+const cancelDeleteProjectBtn = document.getElementById("cancelDeleteProject");
+
+const confirmShareBtn = document.getElementById("confirmShareBtn");
+const cancelShareBtn = document.getElementById("cancelShareBtn");
+
+let currentUserUid = null;
 let projectToDelete = null;
 let projectToShare = null;
-let projectToShareName = null;
 
-/* ---------------------------------------------------------
-   LOADING OVERLAY
---------------------------------------------------------- */
-function showLoading() {
-  loadingOverlay.classList.remove("hidden");
-}
-
-function hideLoading() {
-  loadingOverlay.classList.add("hidden");
-}
-
-/* ---------------------------------------------------------
-   AUTH STATE
---------------------------------------------------------- */
-onAuthStateChanged(auth, user => {
-  if (!user || hasLoaded) return;
-  hasLoaded = true;
-  loadUnifiedProjectList(user.uid);
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  currentUserUid = user.uid;
+  await loadProjects();
 });
 
-/* ---------------------------------------------------------
-   LOAD OWNED + SHARED PROJECTS
---------------------------------------------------------- */
-async function loadUnifiedProjectList(uid) {
+async function loadProjects() {
+  if (!currentUserUid) return;
   showLoading();
   projectList.innerHTML = "";
 
-  const allProjects = [];
+  const ownedQuery = query(
+    collection(db, "projects"),
+    where("ownerUid", "==", currentUserUid)
+  );
+  const ownedSnap = await getDocs(ownedQuery);
 
-  // Own projects
-  const ownSnap = await getDocs(collection(db, `users/${uid}/projects`));
-  ownSnap.forEach(docSnap => {
+  ownedSnap.forEach((docSnap) => {
     const p = docSnap.data();
-    const id = docSnap.id;
-    if (id === "_init") return;
-
-    allProjects.push({
-      id,
-      name: p.name,
-      owner: uid,
-      ownerName: null,
-      isShared: false
-    });
+    addProjectRow(docSnap.id, p.projectName, true);
   });
 
-  const sharedSnap = await getDocs(collection(db, `users/${uid}/shared-projects`));
-  for (const docSnap of sharedSnap.docs) {
+  const sharedSnap = await getDocs(
+    collection(db, "users", currentUserUid, "shared-projects")
+  );
+
+  sharedSnap.forEach((docSnap) => {
     const p = docSnap.data();
-    const id = docSnap.id;
-
-    const ownerRef = doc(db, `users/${p.owner}`);
-    const ownerSnap = await getDoc(ownerRef);
-    const ownerName = ownerSnap.exists() ? ownerSnap.data().displayName : "Unknown";
-
-    allProjects.push({
-      id,
-      name: p.projectName,
-      owner: p.owner,
-      ownerName,
-      isShared: true
-    });
-  }
-
-  // Render
-  allProjects.forEach(project => {
-    const div = document.createElement("div");
-    div.className = "info-box project-card";
-    div.style.cursor = "pointer";
-
-    div.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>${project.name}</h3>
-        ${
-          project.isShared
-            ? `<span style="color:#8f7bff; font-weight:bold;">Shared by: ${project.ownerName}</span>`
-            : `
-              <div style="display:flex; gap:10px;">
-                <button class="share-project-btn" data-id="${project.id}" data-name="${project.name}" style="
-                  background:#6a5acd;
-                  border:none;
-                  color:white;
-                  padding:8px 14px;
-                  border-radius:6px;
-                  cursor:pointer;
-                  font-weight:bold;
-                ">Share</button>
-
-                <button class="delete-project-btn" data-id="${project.id}" style="
-                  background:#d9534f;
-                  border:none;
-                  color:white;
-                  padding:8px 14px;
-                  border-radius:6px;
-                  cursor:pointer;
-                  font-weight:bold;
-                ">Delete</button>
-              </div>
-            `
-        }
-      </div>
-    `;
-
-    // Open project
-    div.addEventListener("click", () => {
-      window.location.href = `/product-backlog?project=${project.id}`;
-    });
-
-    // Delete
-    if (!project.isShared) {
-      div.querySelector(".delete-project-btn").addEventListener("click", e => {
-        e.stopPropagation();
-        projectToDelete = project.id;
-        deleteModal.classList.remove("hidden");
-      });
-    }
-
-    // Share
-    if (!project.isShared) {
-      div.querySelector(".share-project-btn").addEventListener("click", e => {
-        e.stopPropagation();
-        projectToShare = project.id;
-        projectToShareName = project.name;
-        shareEmailInput.value = "";
-        shareModal.classList.remove("hidden");
-      });
-    }
-
-    projectList.appendChild(div);
+    addProjectRow(docSnap.id, p.projectName, false);
   });
 
   hideLoading();
 }
 
-/* ---------------------------------------------------------
-   CREATE PROJECT
---------------------------------------------------------- */
-document.getElementById("openCreateProject").onclick = () => {
-  projectNameInput.value = "";
-  createModal.classList.remove("hidden");
-};
+function addProjectRow(projectId, name, isOwner) {
+  const div = document.createElement("div");
+  div.classList.add("project-row");
 
-document.getElementById("closeProjectModal").onclick = () => {
-  createModal.classList.add("hidden");
-};
+  div.innerHTML = `
+    <div class="project-name">${name}</div>
+    <div class="project-type">${isOwner ? "Owner" : "Shared"}</div>
+    <div class="project-actions">
+      <button class="open-btn" data-id="${projectId}">Open</button>
+      ${isOwner ? `
+        <button class="share-btn" data-id="${projectId}">Share</button>
+        <button class="delete-btn" data-id="${projectId}">Delete</button>
+      ` : ""}
+    </div>
+  `;
 
-document.getElementById("saveProjectBtn").onclick = async () => {
-  const btn = document.getElementById("saveProjectBtn");
-  btn.disabled = true;
-  btn.textContent = "Creating...";
+  projectList.appendChild(div);
+}
 
-  const name = projectNameInput.value.trim();
-  if (!name) {
-    showPopup("Missing Name", "Please enter a project name.");
-    btn.disabled = false;
-    btn.textContent = "Create";
-    return;
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("open-btn")) {
+    const id = e.target.dataset.id;
+    window.location.href = `/product-backlog?project=${id}`;
   }
+});
 
-  const user = auth.currentUser;
-  if (!user) {
-    showPopup("Error", "You must be logged in to create a project.");
-    btn.disabled = false;
-    btn.textContent = "Create";
-    return;
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("share-btn")) {
+    projectToShare = e.target.dataset.id;
+    shareEmailInput.value = "";
+    shareProjectModal.classList.remove("hidden");
   }
+});
 
-  try {
-    const projectsRef = collection(db, `users/${user.uid}/projects`);
-    const snapshot = await getDocs(projectsRef);
-
-    let nameExists = false;
-    snapshot.forEach(docSnap => {
-      const p = docSnap.data();
-      if (p.name.toLowerCase() === name.toLowerCase()) {
-        nameExists = true;
-      }
-    });
-
-    if (nameExists) {
-      showPopup("Duplicate Project", "A project with that name already exists.");
-      btn.disabled = false;
-      btn.textContent = "Create";
-      return;
-    }
-
-    const projectRef = doc(projectsRef);
-    await setDoc(projectRef, {
-      name,
-      latestStoryId: 0,
-      createdAt: Date.now()
-    });
-
-    const projectId = projectRef.id;
-    const basePath = `users/${user.uid}/projects/${projectId}`;
-
-    await setDoc(
-      doc(db, `${basePath}/product-backlog/_init`),
-      { placeholder: true, createdAt: Date.now() }
-    );
-
-    await setDoc(
-      doc(db, `${basePath}/sprint-backlog/_init`),
-      { placeholder: true, createdAt: Date.now() }
-    );
-
-    showPopup("Project Created", `"${name}" has been added.`);
-
-    createModal.classList.add("hidden");
-    loadUnifiedProjectList(user.uid);
-  } catch (err) {
-    console.error(err);
-    showPopup("Error", "Something went wrong while creating the project.");
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Create";
-  }
-};
-
-/* ---------------------------------------------------------
-   DELETE PROJECT
---------------------------------------------------------- */
-document.getElementById("cancelDeleteProject").onclick = () => {
-  projectToDelete = null;
-  deleteModal.classList.add("hidden");
-};
-
-document.getElementById("confirmDeleteProject").onclick = async () => {
-  if (!projectToDelete) return;
-
-  const user = auth.currentUser;
-  if (!user) return;
-
-  await deleteDoc(doc(db, `users/${user.uid}/projects/${projectToDelete}`));
-
-  deleteModal.classList.add("hidden");
-  projectToDelete = null;
-  loadUnifiedProjectList(user.uid);
-};
-
-/* ---------------------------------------------------------
-   SHARE PROJECT
---------------------------------------------------------- */
-document.getElementById("cancelShareBtn").onclick = () => {
+cancelShareBtn.onclick = () => {
   projectToShare = null;
-  projectToShareName = null;
-  shareModal.classList.add("hidden");
+  shareProjectModal.classList.add("hidden");
 };
 
-document.getElementById("confirmShareBtn").onclick = async () => {
-  const inputRaw = shareEmailInput.value.trim();
-  const input = inputRaw.toLowerCase();
+confirmShareBtn.onclick = async () => {
+  if (!projectToShare) return;
+  const ident = shareEmailInput.value.trim();
+  if (!ident) return;
+  await sendShareRequest(projectToShare, ident);
+  shareProjectModal.classList.add("hidden");
+  projectToShare = null;
+};
 
-  if (!input) {
-    showPopup("Missing Input", "Enter a username or email.");
-    return;
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("delete-btn")) {
+    projectToDelete = e.target.dataset.id;
+    deleteProjectModal.classList.remove("hidden");
   }
+});
+
+cancelDeleteProjectBtn.onclick = () => {
+  projectToDelete = null;
+  deleteProjectModal.classList.add("hidden");
+};
+
+confirmDeleteProjectBtn.onclick = async () => {
+  if (!projectToDelete) return;
+  await deleteDoc(doc(db, "projects", projectToDelete));
+  deleteProjectModal.classList.add("hidden");
+  projectToDelete = null;
+  loadProjects();
+};
+
+openCreateProjectBtn.onclick = () => {
+  projectNameInput.value = "";
+  createProjectModal.classList.remove("hidden");
+};
+
+closeProjectModalBtn.onclick = () => {
+  createProjectModal.classList.add("hidden");
+};
+
+saveProjectBtn.onclick = async () => {
+  const name = projectNameInput.value.trim();
+  if (!name || !currentUserInfo || !currentUserInfo.usernameLower) return;
 
   const user = auth.currentUser;
   if (!user) return;
 
-  const usersSnap = await getDocs(collection(db, "users"));
+  const usernameLower = currentUserInfo.usernameLower;
 
-  let targetUid = null;
+  const usernameRef = doc(db, "usernames", usernameLower);
+  const usernameSnap = await getDoc(usernameRef);
+  if (!usernameSnap.exists()) return;
 
-  usersSnap.forEach(docSnap => {
-    const u = docSnap.data();
-    const uid = docSnap.id;
+  const displayName = usernameSnap.data().displayName || usernameLower;
 
-    const userEmail = u.email?.toLowerCase();
-    const userName = u.displayName?.toLowerCase();
+  const newRef = doc(collection(db, "projects"));
 
-    if (userEmail === input || userName === input) {
-      targetUid = uid;
-    }
+  await setDoc(newRef, {
+    projectName: name,
+    owner: displayName,
+    ownerUid: user.uid,
+    ownerUsernameLower: usernameLower,
+    sharedWith: []
   });
 
-  if (!targetUid) {
-    showPopup("User Not Found", "No user exists with that username or email.");
-    return;
-  }
-
-  if (targetUid === user.uid) {
-    showPopup("Invalid", "You cannot share a project with yourself.");
-    return;
-  }
-
-  await sendShareRequest(targetUid, projectToShare, projectToShareName);
-
-  showPopup("Request Sent", `Your share request for "${projectToShareName}" has been sent.`);
-
-  shareModal.classList.add("hidden");
+  createProjectModal.classList.add("hidden");
+  loadProjects();
 };
-
-/* ---------------------------------------------------------
-   POPUP
---------------------------------------------------------- */
-function showPopup(title, message) {
-  const popup = document.getElementById("customPopup");
-  document.getElementById("popupTitle").textContent = title;
-  document.getElementById("popupMessage").textContent = message;
-
-  popup.classList.remove("hidden");
-
-  document.getElementById("popupCloseBtn").onclick = () => {
-    popup.classList.add("hidden");
-  };
-}

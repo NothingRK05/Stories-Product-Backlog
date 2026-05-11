@@ -9,10 +9,7 @@ import {
   query,
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getProjectOwner } from "../js/sharing.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { showLoading, hideLoading } from "./loading.js";
 
 // ---------------------------------------------------------
@@ -21,11 +18,9 @@ import { showLoading, hideLoading } from "./loading.js";
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("project");
 
-if (!projectId) {
-  console.error("❌ No projectId in URL");
-}
+if (!projectId) console.error("❌ No projectId in URL");
 
-let ownerUid = null;
+let currentUserUid = null;
 let hasLoaded = false;
 
 const storyList = document.getElementById("storyList");
@@ -42,22 +37,23 @@ const statusInput = document.getElementById("statusInput");
 let storyToDelete = null;
 
 // ---------------------------------------------------------
-// AUTH + PERMISSION CHECK
+// BASE PATH
+// ---------------------------------------------------------
+function basePath() {
+  return `projects/${projectId}`;
+}
+
+// ---------------------------------------------------------
+// AUTH
 // ---------------------------------------------------------
 onAuthStateChanged(auth, async (user) => {
   if (!user || !projectId) return;
 
-  ownerUid = await getProjectOwner(projectId, user.uid);
-
-  if (!ownerUid) {
-    alert("You do not have permission to access this project.");
-    window.location.href = "/projects";
-    return;
-  }
+  currentUserUid = user.uid;
 
   if (!hasLoaded) {
     hasLoaded = true;
-    loadStories(ownerUid, projectId);
+    loadStories();
   }
 });
 
@@ -79,14 +75,13 @@ document.getElementById("cancelDeleteBtn").onclick = () => {
 };
 
 document.getElementById("confirmDeleteBtn").onclick = async () => {
-  if (!storyToDelete || !ownerUid) return;
+  if (!storyToDelete) return;
 
-  const base = `users/${ownerUid}/projects/${projectId}`;
-  await deleteDoc(doc(db, `${base}/product-backlog/${storyToDelete}`));
+  await deleteDoc(doc(db, `${basePath()}/product-backlog/${storyToDelete}`));
 
   deleteModal.classList.add("hidden");
   storyToDelete = null;
-  loadStories(ownerUid, projectId);
+  loadStories();
 };
 
 // ---------------------------------------------------------
@@ -103,15 +98,15 @@ function resetModal() {
   statusInput.value = "Not Ready";
 
   document.getElementById("saveStoryBtn").onclick = () => {
-    saveStory(ownerUid, projectId);
+    saveStory();
   };
 }
 
 // ---------------------------------------------------------
 // NEXT STORY ID
 // ---------------------------------------------------------
-async function getNextStoryId(uid, projectId) {
-  const projectRef = doc(db, `users/${uid}/projects/${projectId}`);
+async function getNextStoryId() {
+  const projectRef = doc(db, `projects/${projectId}`);
   const snap = await getDoc(projectRef);
 
   let next = 1;
@@ -128,11 +123,10 @@ async function getNextStoryId(uid, projectId) {
 // ---------------------------------------------------------
 // SAVE STORY
 // ---------------------------------------------------------
-async function saveStory(uid, projectId) {
-  const storyId = await getNextStoryId(uid, projectId);
+async function saveStory() {
+  const storyId = await getNextStoryId();
 
-  const base = `users/${uid}/projects/${projectId}`;
-  const ref = doc(db, `${base}/product-backlog/${storyId}`);
+  const ref = doc(db, `${basePath()}/product-backlog/${storyId}`);
 
   await setDoc(ref, {
     storyId,
@@ -142,28 +136,30 @@ async function saveStory(uid, projectId) {
     description: descriptionInput.value,
     spike: spikeInput.value,
     status: statusInput.value,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    updatedBy: currentUserUid
   });
 
   modal.classList.add("hidden");
-  loadStories(uid, projectId);
+  loadStories();
 }
 
 // ---------------------------------------------------------
 // LOAD STORIES
 // ---------------------------------------------------------
-async function loadStories(uid, projectId) {
+async function loadStories() {
   showLoading();
-  
   storyList.innerHTML = "";
 
-  const base = `users/${uid}/projects/${projectId}`;
-  const q = query(collection(db, `${base}/product-backlog`), orderBy("storyId"));
+  const q = query(
+    collection(db, `${basePath()}/product-backlog`),
+    orderBy("storyId")
+  );
+
   const snapshot = await getDocs(q);
 
   snapshot.forEach((docSnap) => {
     const s = docSnap.data();
-
     if (s.storyId === "_init") return;
 
     const tr = document.createElement("tr");
@@ -195,10 +191,9 @@ async function loadStories(uid, projectId) {
 // ---------------------------------------------------------
 // MOVE STORY TO SPRINT BACKLOG
 // ---------------------------------------------------------
-async function moveStoryToSprintBacklog(uid, projectId, storyId) {
-  const base = `users/${uid}/projects/${projectId}`;
-  const sourceRef = doc(db, `${base}/product-backlog/${storyId}`);
-  const targetRef = doc(db, `${base}/sprint-backlog/${storyId}`);
+async function moveStoryToSprintBacklog(storyId) {
+  const sourceRef = doc(db, `${basePath()}/product-backlog/${storyId}`);
+  const targetRef = doc(db, `${basePath()}/sprint-backlog/${storyId}`);
 
   const snap = await getDoc(sourceRef);
   if (!snap.exists()) return;
@@ -207,12 +202,13 @@ async function moveStoryToSprintBacklog(uid, projectId, storyId) {
 
   await setDoc(targetRef, {
     ...data,
-    movedAt: Date.now()
+    movedAt: Date.now(),
+    movedBy: currentUserUid
   });
 
   await deleteDoc(sourceRef);
 
-  loadStories(uid, projectId);
+  loadStories();
 }
 
 // ---------------------------------------------------------
@@ -241,8 +237,7 @@ document.addEventListener("click", async (e) => {
   if (!e.target.classList.contains("edit-item")) return;
 
   const storyId = e.target.dataset.id;
-  const base = `users/${ownerUid}/projects/${projectId}`;
-  const ref = doc(db, `${base}/product-backlog/${storyId}`);
+  const ref = doc(db, `${basePath()}/product-backlog/${storyId}`);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) return;
@@ -267,11 +262,12 @@ document.addEventListener("click", async (e) => {
       description: descriptionInput.value,
       spike: spikeInput.value,
       status: statusInput.value,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      updatedBy: currentUserUid
     });
 
     modal.classList.add("hidden");
-    loadStories(ownerUid, projectId);
+    loadStories();
   };
 
   modal.classList.remove("hidden");
@@ -282,13 +278,12 @@ document.addEventListener("click", async (e) => {
   if (!e.target.classList.contains("move-item")) return;
 
   const storyId = e.target.dataset.id;
-  await moveStoryToSprintBacklog(ownerUid, projectId, storyId);
+  await moveStoryToSprintBacklog(storyId);
 });
 
 // ---------------------------------------------------------
 // SORTING
 // ---------------------------------------------------------
-
 let currentSort = null;
 
 document.getElementById("sortBtn").addEventListener("click", () => {
@@ -304,7 +299,7 @@ document.querySelectorAll("#sortMenu div").forEach(option => {
 });
 
 function sortStories() {
-  const rows = Array.from(tbody.querySelectorAll("tr"));
+  const rows = Array.from(storyList.querySelectorAll("tr"));
 
   const sorted = rows.sort((rowA, rowB) => {
     const get = (row, index) => row.children[index].innerText.trim();
@@ -335,6 +330,6 @@ function sortStories() {
     }
   });
 
-  tbody.innerHTML = "";
-  sorted.forEach(r => tbody.appendChild(r));
+  storyList.innerHTML = "";
+  sorted.forEach(r => storyList.appendChild(r));
 }

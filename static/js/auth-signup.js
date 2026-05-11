@@ -15,6 +15,7 @@ document.querySelector("form").addEventListener("submit", async (e) => {
   const usernameRaw = document.getElementById("signupName").value.trim();
   const email = document.getElementById("signupEmail").value.trim();
   const password = document.getElementById("signupPassword").value.trim();
+
   const usernameDisplay = usernameRaw;
   const usernameLower = usernameRaw.toLowerCase();
 
@@ -30,7 +31,11 @@ document.querySelector("form").addEventListener("submit", async (e) => {
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
 
-    await setDoc(usernameRef, { uid: user.uid, email: email.toLowerCase() });
+    await setDoc(usernameRef, {
+      uid: user.uid,
+      email: email.toLowerCase(),
+      displayName: usernameDisplay
+    });
 
     await setDoc(
       doc(db, "users", user.uid),
