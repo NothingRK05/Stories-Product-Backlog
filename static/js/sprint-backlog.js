@@ -132,4 +132,57 @@ document.addEventListener("click", async e => {
 
     loadSprintStories(user.uid, projectId);
   }
+<<<<<<< HEAD
 });
+=======
+});
+
+let currentSort = null;
+
+document.getElementById("sortBtn").addEventListener("click", () => {
+  document.getElementById("sortMenu").classList.toggle("hidden");
+});
+
+document.querySelectorAll("#sortMenu div").forEach(option => {
+  option.addEventListener("click", () => {
+    currentSort = option.dataset.sort;
+    sortStories();
+    document.getElementById("sortMenu").classList.add("hidden");
+  });
+});
+
+function sortStories() {
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  const sorted = rows.sort((rowA, rowB) => {
+    const get = (row, index) => row.children[index].innerText.trim();
+
+    switch (currentSort) {
+      case "id":
+        return get(rowA, 0).localeCompare(get(rowB, 0));
+
+      case "priority":
+        return Number(get(rowA, 2)) - Number(get(rowB, 2));
+
+      case "estimate":
+        return Number(get(rowA, 3)) - Number(get(rowB, 3));
+
+      case "spike":
+        return (get(rowA, 4) === "Yes" ? 1 : 0) - (get(rowB, 4) === "Yes" ? 1 : 0);
+
+      case "status":
+        return get(rowA, 5).localeCompare(get(rowB, 5));
+
+      case "assigned":
+        return get(rowA, 6).localeCompare(get(rowB, 6));
+
+      default:
+        return 0;
+    }
+  });
+
+  // Clear and re-append sorted rows
+  tbody.innerHTML = "";
+  sorted.forEach(r => tbody.appendChild(r));
+}
+>>>>>>> 08f1441c3e7401d915b25c6fe0b3bffa2ceaa53c
