@@ -1,5 +1,5 @@
+import { auth, db } from "./firebase.js";
 import {
-  getFirestore,
   doc,
   setDoc,
   getDoc,
@@ -8,10 +8,6 @@ import {
   collection,
   arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const db = getFirestore();
-const auth = getAuth();
 
 /* ---------------------------------------------------------
    SEND SHARE REQUEST

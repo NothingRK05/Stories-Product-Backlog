@@ -1,27 +1,23 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getFirestore, collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, orderBy 
+import { auth, db } from "../js/firebase.js";
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  query,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { 
-  getAuth, onAuthStateChanged 
+import {
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getProjectOwner } from "../js/sharing.js";
+import { hideLoading, showLoading } from "./loading.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDcWb980e-FXMugxnx6jE1CZB3WrVFw4-4",
-  authDomain: "stories-dec4a.firebaseapp.com",
-  databaseURL: "https://stories-dec4a-default-rtdb.firebaseio.com",
-  projectId: "stories-dec4a",
-  storageBucket: "stories-dec4a.firebasestorage.app",
-  messagingSenderId: "95187761797",
-  appId: "1:95187761797:web:bf377dc3852526bf7187ec",
-  measurementId: "G-7PBGNCC6K9"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
+// ---------------------------------------------------------
+// URL + DOM
+// ---------------------------------------------------------
 let hasLoaded = false;
 let ownerUid = null;
 
@@ -39,10 +35,10 @@ const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
 
 let storyToDelete = null;
 
-/* ---------------------------------------------------------
-   AUTH + PERMISSION CHECK
---------------------------------------------------------- */
-onAuthStateChanged(auth, async user => {
+// ---------------------------------------------------------
+// AUTH + PERMISSION CHECK
+// ---------------------------------------------------------
+onAuthStateChanged(auth, async (user) => {
   if (!user || !projectId) return;
 
   ownerUid = await getProjectOwner(projectId, user.uid);
@@ -59,9 +55,9 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-/* ---------------------------------------------------------
-   DELETE MODAL
---------------------------------------------------------- */
+// ---------------------------------------------------------
+// DELETE MODAL
+// ---------------------------------------------------------
 cancelDeleteBtn.onclick = () => {
   storyToDelete = null;
   deleteModal.classList.add("hidden");
@@ -78,19 +74,20 @@ confirmDeleteBtn.onclick = async () => {
   loadSprintStories(ownerUid, projectId);
 };
 
-/* ---------------------------------------------------------
-   LOAD SPRINT STORIES
---------------------------------------------------------- */
+// ---------------------------------------------------------
+// LOAD SPRINT STORIES
+// ---------------------------------------------------------
 async function loadSprintStories(uid, projectId) {
+  showLoading();
+
   tbody.innerHTML = "";
 
   const base = `users/${uid}/projects/${projectId}`;
   const q = query(collection(db, `${base}/sprint-backlog`), orderBy("storyId"));
   const snapshot = await getDocs(q);
 
-  snapshot.forEach(docSnap => {
+  snapshot.forEach((docSnap) => {
     const s = docSnap.data();
-
     if (s.storyId === "_init") return;
 
     const tr = document.createElement("tr");
@@ -106,7 +103,7 @@ async function loadSprintStories(uid, projectId) {
 
       <td style="position:relative; width:40px; text-align:right;">
         <button class="menu-btn" type="button">⋮</button>
-        <div class="menu-dropdown">
+        <div class="menu-dropdown hidden">
           <div class="menu-item mark-ready" data-id="${s.storyId}">Mark As Ready</div>
           <div class="menu-item delete-item" data-id="${s.storyId}">Delete</div>
         </div>
@@ -115,14 +112,16 @@ async function loadSprintStories(uid, projectId) {
 
     tbody.appendChild(tr);
   });
+
+  hideLoading();
 }
 
-/* ---------------------------------------------------------
-   MENU + ACTION HANDLERS
---------------------------------------------------------- */
-document.addEventListener("click", e => {
+// ---------------------------------------------------------
+// MENU + ACTION HANDLERS
+// ---------------------------------------------------------
+document.addEventListener("click", (e) => {
   if (!e.target.classList.contains("menu-btn")) {
-    document.querySelectorAll(".menu-dropdown").forEach(m => m.classList.remove("show"));
+    document.querySelectorAll(".menu-dropdown").forEach((m) => m.classList.remove("show"));
     return;
   }
 
@@ -130,46 +129,47 @@ document.addEventListener("click", e => {
   dropdown.classList.toggle("show");
 });
 
-document.addEventListener("click", e => {
+// Delete
+document.addEventListener("click", (e) => {
   if (e.target.classList.contains("delete-item")) {
     storyToDelete = e.target.dataset.id;
     deleteModal.classList.remove("hidden");
   }
 });
 
-document.addEventListener("click", async e => {
-  if (e.target.classList.contains("mark-ready")) {
-    if (!ownerUid) return;
+// Mark Ready
+document.addEventListener("click", async (e) => {
+  if (!e.target.classList.contains("mark-ready")) return;
+  if (!ownerUid) return;
 
-    const storyId = e.target.dataset.id;
+  const storyId = e.target.dataset.id;
+  const base = `users/${ownerUid}/projects/${projectId}`;
+  const ref = doc(db, `${base}/sprint-backlog/${storyId}`);
 
-    const base = `users/${ownerUid}/projects/${projectId}`;
-    const ref = doc(db, `${base}/sprint-backlog/${storyId}`);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
 
-    const data = snap.data();
+  const data = snap.data();
 
-    await setDoc(ref, {
-      ...data,
-      status: "Ready",
-      updatedAt: Date.now()
-    });
+  await setDoc(ref, {
+    ...data,
+    status: "Ready",
+    updatedAt: Date.now()
+  });
 
-    loadSprintStories(ownerUid, projectId);
-  }
+  loadSprintStories(ownerUid, projectId);
 });
 
-/* ---------------------------------------------------------
-   SORTING
---------------------------------------------------------- */
+// ---------------------------------------------------------
+// SORTING
+// ---------------------------------------------------------
 let currentSort = null;
 
 document.getElementById("sortBtn").addEventListener("click", () => {
   document.getElementById("sortMenu").classList.toggle("hidden");
 });
 
-document.querySelectorAll("#sortMenu div").forEach(option => {
+document.querySelectorAll("#sortMenu div").forEach((option) => {
   option.addEventListener("click", () => {
     currentSort = option.dataset.sort;
     sortStories();
@@ -208,5 +208,5 @@ function sortStories() {
   });
 
   tbody.innerHTML = "";
-  sorted.forEach(r => tbody.appendChild(r));
+  sorted.forEach((r) => tbody.appendChild(r));
 }
