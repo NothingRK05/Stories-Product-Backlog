@@ -29,7 +29,9 @@ document.querySelector("form").addEventListener("submit", async (e) => {
 
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
-    await setDoc(usernameRef, { uid: user.uid });
+
+    await setDoc(usernameRef, { uid: user.uid, email: email.toLowerCase() });
+
     await setDoc(
       doc(db, "users", user.uid),
       {
@@ -41,6 +43,7 @@ document.querySelector("form").addEventListener("submit", async (e) => {
       },
       { merge: true }
     );
+
     await updateProfile(user, { displayName: usernameDisplay });
     window.location.href = "/projects";
 

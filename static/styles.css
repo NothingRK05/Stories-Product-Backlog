@@ -12,6 +12,10 @@
   --border: #6a5acd;
   --radius: 10px;
   --transition: 0.25s ease;
+
+  /* Missing variables (added) */
+  --bg-secondary: #1a1a1a;
+  --border-color: #444;
 }
 
 html[data-theme="light"] {
@@ -19,6 +23,10 @@ html[data-theme="light"] {
   --bg-panel: #fff;
   --text-light: #222;
   --text-dark: #222;
+
+  /* Light mode versions */
+  --bg-secondary: #fff;
+  --border-color: #ccc;
 }
 
 /* ============================================================
@@ -95,6 +103,9 @@ html[data-theme="light"] .header {
 
 .nav-right {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
 .profile-menu {
@@ -656,4 +667,59 @@ html[data-theme="light"] .auth-input {
 @keyframes popIn {
   from { transform: scale(0.85); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================================
+   INBOX (FIXED + FINAL)
+   ============================================================ */
+
+.inbox-icon {
+  position: relative;
+  cursor: pointer;
+  font-size: 22px;
+  margin-right: 0;
+}
+
+.inbox-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: #ff4d4d;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.inbox-panel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 280px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  z-index: 3000;
+}
+
+.inbox-list .request-item {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.inbox-list .request-item:last-child {
+  border-bottom: none;
+}
+
+.request-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.request-actions button {
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
 }

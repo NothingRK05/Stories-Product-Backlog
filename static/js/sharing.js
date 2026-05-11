@@ -3,6 +3,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   updateDoc,
   addDoc,
   collection,
@@ -12,9 +13,36 @@ import {
 /* ---------------------------------------------------------
    SEND SHARE REQUEST
 --------------------------------------------------------- */
-export async function sendShareRequest(targetUid, projectId, projectName) {
+export async function sendShareRequest(targetIdentifier, projectId, projectName) {
   const user = auth.currentUser;
   if (!user) throw new Error("Not logged in");
+
+  const identifier = targetIdentifier.trim().toLowerCase();
+  const usernameRef = doc(db, "usernames", identifier);
+  const usernameSnap = await getDoc(usernameRef);
+  let targetUid = null;
+
+  if (usernameSnap.exists()) {
+    targetUid = usernameSnap.data().uid;
+  } else {
+    const usersRef = collection(db, "users");
+    const usersSnap = await getDocs(usersRef);
+
+    usersSnap.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.email && data.email.toLowerCase() === identifier) {
+        targetUid = docSnap.id;
+      }
+    });
+  }
+
+  if (!targetUid) {
+    throw new Error("User not found.");
+  }
+
+  if (targetUid === user.uid) {
+    throw new Error("You cannot share a project with yourself.");
+  }
 
   await addDoc(collection(db, "shareRequests"), {
     from: user.uid,
