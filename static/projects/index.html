@@ -10,9 +10,22 @@
 <body>
 
     <header class="header">
-        <a href="/" class="logo">Stories</a>
-        <div class="nav-right" id="authArea"></div>
+        <a href="/projects" class="logo">Stories</a>
+
+        <div class="nav-right">
+            <div id="inboxIcon" class="inbox-icon">
+            🔔
+            <span id="inboxBadge" class="inbox-badge hidden"></span>
+            </div>
+
+            <div id="authArea"></div>
+        </div>
     </header>
+
+    <div id="inboxPanel" class="inbox-panel hidden">
+        <h3>Share Requests</h3>
+        <div id="inboxList" class="inbox-list"></div>
+    </div>
 
     <div class="container" style="margin-top: 60px;">
         <h2 class="title">My Projects</h2>
@@ -57,7 +70,7 @@
         <h3>Share Project</h3>
 
         <p style="margin-bottom:15px; color:#ccc;">
-        Enter the email of the user you want to share this project with.
+        Enter username or email of the user you'd like to share this project with.
         </p>
 
         <div class="modal-field">
@@ -87,6 +100,8 @@
 
     <script type="module" src="../js/firebase.js"></script>
     <script type="module" src="../js/auth-state.js"></script>
+    <script type="module" src="../js/inbox.js"></script>
+    <script type="module" src="../js/sharing.js"></script>
     <script type="module" src="../js/projects.js"></script>
 
 </body>
