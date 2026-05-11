@@ -216,6 +216,10 @@ function addStoryRow(id, story) {
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("story-menu-icon")) {
     const id = e.target.dataset.id;
+
+    document.querySelectorAll(".story-menu").forEach((m) => {
+      if (m.id !== `menu-${id}`) m.classList.add("hidden");
+    });
     const menu = document.getElementById(`menu-${id}`);
     menu.classList.toggle("hidden");
     return;
