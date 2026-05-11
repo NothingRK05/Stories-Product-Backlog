@@ -81,7 +81,7 @@
 
       <div class="modal-field">
         <label>Assignment</label>
-        <input type="text" id="assignmentInput" />
+        <select id="assignmentInput"></select>
       </div>
 
       <div class="modal-field">
@@ -120,6 +120,15 @@
         <button id="confirmDeleteBtn" class="btn" style="background:#d9534f;">Delete</button>
         <button id="cancelDeleteBtn" class="btn cancel-btn">Cancel</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ⭐ REQUIRED POPUP (your JS references this) -->
+  <div id="customPopup" class="popup-overlay hidden">
+    <div class="popup-box">
+      <h3 id="popupTitle">Notice</h3>
+      <p id="popupMessage"></p>
+      <button id="popupCloseBtn">OK</button>
     </div>
   </div>
 

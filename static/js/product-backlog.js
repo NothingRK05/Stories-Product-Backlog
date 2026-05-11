@@ -1,20 +1,36 @@
-import { auth, db } from "../js/firebase.js";
 import {
-  collection,
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+  getFirestore,
   doc,
+  getDoc,
   getDocs,
+  collection,
+  query,
+  orderBy,
   addDoc,
   updateDoc,
-  deleteDoc,
-  getDoc
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { showLoading, hideLoading } from "./loading.js";
+import { app } from "./firebase.js";
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ============================================================
+   DOM ELEMENTS
+   ============================================================ */
 
 const storyList = document.getElementById("storyList");
+
+const openCreateModalBtn = document.getElementById("openCreateModal");
 const createModal = document.getElementById("createModal");
-const deleteModal = document.getElementById("deleteModal");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const saveStoryBtn = document.getElementById("saveStoryBtn");
 
 const priorityInput = document.getElementById("priorityInput");
 const estimateInput = document.getElementById("estimateInput");
@@ -23,47 +39,62 @@ const descriptionInput = document.getElementById("descriptionInput");
 const spikeInput = document.getElementById("spikeInput");
 const statusInput = document.getElementById("statusInput");
 
-const openCreateModalBtn = document.getElementById("openCreateModal");
-const closeModalBtn = document.getElementById("closeModalBtn");
-const saveStoryBtn = document.getElementById("saveStoryBtn");
-
+const deleteModal = document.getElementById("deleteModal");
 const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+
+const customPopup = document.getElementById("customPopup");
+const popupTitleEl = document.getElementById("popupTitle");
+const popupMessageEl = document.getElementById("popupMessage");
+const popupCloseBtn = document.getElementById("popupCloseBtn");
 
 const sortBtn = document.getElementById("sortBtn");
 const sortMenu = document.getElementById("sortMenu");
 
-const params = new URLSearchParams(window.location.search);
-const projectId = params.get("project");
+/* ============================================================
+   STATE
+   ============================================================ */
 
-let currentUid = null;
-let storyToDelete = null;
+let projectId = null;
+let currentUser = null;
 let storyToEdit = null;
+let storyToDelete = null;
 let currentSort = "id";
 
 /* ============================================================
-   AUTH + ACCESS CHECK
+   POPUP HELPER
    ============================================================ */
 
+function showPopup(title, message) {
+  popupTitleEl.textContent = title;
+  popupMessageEl.textContent = message;
+  customPopup.classList.remove("hidden");
+
+  popupCloseBtn.onclick = () => {
+    customPopup.classList.add("hidden");
+  };
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+
+function getProjectIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("project");
+}
+
 onAuthStateChanged(auth, async (user) => {
-  if (!user || !projectId) return;
-  currentUid = user.uid;
-
-  const projectRef = doc(db, "projects", projectId);
-  const projectSnap = await getDoc(projectRef);
-
-  if (!projectSnap.exists()) {
-    alert("Project not found.");
-    window.location.href = "/projects";
+  if (!user) {
+    window.location.href = "/login";
     return;
   }
 
-  const project = projectSnap.data();
+  currentUser = user;
+  projectId = getProjectIdFromUrl();
 
-  if (project.ownerUid !== currentUid &&
-      !(project.sharedWith || []).includes(currentUid)) {
-    alert("You do not have access to this project.");
-    window.location.href = "/projects";
+  if (!projectId) {
+    showPopup("Error", "No project specified.");
     return;
   }
 
@@ -71,23 +102,63 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 /* ============================================================
+   LOAD ASSIGNMENT OPTIONS
+   ============================================================ */
+
+async function loadAssignmentOptions() {
+  const projectRef = doc(db, "projects", projectId);
+  const projectSnap = await getDoc(projectRef);
+  if (!projectSnap.exists()) return;
+
+  const project = projectSnap.data();
+  const ownerUid = project.ownerUid;
+  const sharedWith = project.sharedWith || [];
+
+  assignmentInput.innerHTML = "";
+
+  // Owner
+  let ownerName = "Owner";
+  if (ownerUid) {
+    const ownerRef = doc(db, "users", ownerUid);
+    const ownerSnap = await getDoc(ownerRef);
+    if (ownerSnap.exists()) {
+      ownerName = ownerSnap.data().displayName || "Owner";
+    }
+  }
+
+  assignmentInput.innerHTML += `<option value="${ownerName}">${ownerName}</option>`;
+
+  // Shared users
+  for (const uid of sharedWith) {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) continue;
+
+    const name = userSnap.data().displayName || "User";
+    assignmentInput.innerHTML += `<option value="${name}">${name}</option>`;
+  }
+
+  assignmentInput.innerHTML += `<option value="">Unassigned</option>`;
+}
+
+/* ============================================================
    LOAD STORIES
    ============================================================ */
 
 async function loadStories() {
-  showLoading();
   storyList.innerHTML = "";
 
   const colRef = collection(db, "projects", projectId, "product-backlog");
   const snap = await getDocs(colRef);
 
-  const stories = [];
+  let stories = [];
   snap.forEach((d) => {
     if (d.id !== "_placeholder") {
       stories.push({ id: d.id, ...d.data() });
     }
   });
 
+  // Sorting
   stories.sort((a, b) => {
     if (currentSort === "priority") return (a.priority || 0) - (b.priority || 0);
     if (currentSort === "estimate") return (a.estimate || 0) - (b.estimate || 0);
@@ -97,15 +168,14 @@ async function loadStories() {
     return (a.numericId || 0) - (b.numericId || 0);
   });
 
-  stories.forEach(addStoryRow);
-  hideLoading();
+  stories.forEach((story) => addStoryRow(story.id, story));
 }
 
 /* ============================================================
-   RENDER ROW
+   RENDER STORY ROW (WITH 3 DOTS)
    ============================================================ */
 
-function addStoryRow(story) {
+function addStoryRow(id, story) {
   const tr = document.createElement("tr");
 
   tr.innerHTML = `
@@ -115,16 +185,22 @@ function addStoryRow(story) {
     <td>${story.estimate || ""}</td>
     <td>${story.spike || ""}</td>
     <td>${story.status || ""}</td>
-    <td>${story.assigned || ""}</td>
+    <td>${story.assigned || "Unassigned"}</td>
 
     <td class="story-actions-cell">
       <div class="story-menu-wrapper">
-        <div class="story-menu-icon" data-id="${story.id}">⋮</div>
+        <div class="story-menu-icon" data-id="${id}">⋮</div>
 
-        <div class="story-menu hidden" id="menu-${story.id}">
-          <div class="story-menu-item" data-action="edit" data-id="${story.id}">Edit</div>
-          <div class="story-menu-item" data-action="move" data-id="${story.id}">Move to Sprint Backlog</div>
-          <div class="story-menu-item" data-action="delete" data-id="${story.id}">Delete</div>
+        <div class="story-menu hidden" id="menu-${id}">
+          <div class="story-menu-item" data-action="edit" data-id="${id}">
+            Edit
+          </div>
+          <div class="story-menu-item" data-action="move" data-id="${id}">
+            Move to Sprint Backlog
+          </div>
+          <div class="story-menu-item" data-action="delete" data-id="${id}">
+            Delete
+          </div>
         </div>
       </div>
     </td>
@@ -134,7 +210,7 @@ function addStoryRow(story) {
 }
 
 /* ============================================================
-   3-DOTS MENU
+   3 DOTS MENU
    ============================================================ */
 
 document.addEventListener("click", (e) => {
@@ -161,52 +237,79 @@ document.addEventListener("click", async (e) => {
   const id = e.target.dataset.id;
 
   if (action === "edit") {
-    document.querySelectorAll(".story-menu").forEach(m => m.classList.add("hidden"));
     openEditModal(id);
   }
 
   if (action === "move") {
-    await moveStoryToSprint(id);
+    await moveToSprintBacklog(id);
   }
 
   if (action === "delete") {
-    document.querySelectorAll(".story-menu").forEach(m => m.classList.add("hidden"));
-    storyToDelete = id;
-    deleteModal.classList.remove("hidden");
+    openDeleteModal(id);
   }
 });
+
+/* ============================================================
+   MOVE TO SPRINT BACKLOG
+   ============================================================ */
+
+async function moveToSprintBacklog(storyId) {
+  const ref = doc(db, "projects", projectId, "product-backlog", storyId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const story = snap.data();
+
+  await addDoc(collection(db, "projects", projectId, "sprint-backlog"), story);
+  await deleteDoc(ref);
+
+  loadStories();
+}
 
 /* ============================================================
    DELETE STORY
    ============================================================ */
 
+function openDeleteModal(storyId) {
+  document.querySelectorAll(".story-menu").forEach(m => m.classList.add("hidden"));
+  storyToDelete = storyId;
+  deleteModal.classList.remove("hidden");
+}
+
 confirmDeleteBtn.onclick = async () => {
   if (!storyToDelete) return;
 
-  await deleteDoc(doc(db, "projects", projectId, "product-backlog", storyToDelete));
+  const ref = doc(db, "projects", projectId, "product-backlog", storyToDelete);
+  await deleteDoc(ref);
 
-  deleteModal.classList.add("hidden");
   storyToDelete = null;
+  deleteModal.classList.add("hidden");
   loadStories();
 };
 
 cancelDeleteBtn.onclick = () => {
-  storyToDelete = null;
   deleteModal.classList.add("hidden");
+  storyToDelete = null;
 };
 
 /* ============================================================
    CREATE / EDIT STORY
    ============================================================ */
 
-openCreateModalBtn.onclick = () => {
+openCreateModalBtn.onclick = async () => {
+
+
   storyToEdit = null;
+
   priorityInput.value = "";
   estimateInput.value = "";
-  assignmentInput.value = "";
   descriptionInput.value = "";
   spikeInput.value = "No";
   statusInput.value = "Not Ready";
+
+  await loadAssignmentOptions();
+  assignmentInput.value = "";
+
   createModal.classList.remove("hidden");
 };
 
@@ -228,7 +331,8 @@ saveStoryBtn.onclick = async () => {
 
   // EDIT MODE
   if (storyToEdit) {
-    await updateDoc(doc(db, "projects", projectId, "product-backlog", storyToEdit), {
+    const storyRef = doc(db, "projects", projectId, "product-backlog", storyToEdit);
+    await updateDoc(storyRef, {
       priority,
       estimate,
       assigned,
@@ -273,40 +377,24 @@ saveStoryBtn.onclick = async () => {
    ============================================================ */
 
 async function openEditModal(storyId) {
+  document.querySelectorAll(".story-menu").forEach(m => m.classList.add("hidden"));
   const ref = doc(db, "projects", projectId, "product-backlog", storyId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
 
   const s = snap.data();
-
   storyToEdit = storyId;
 
-  priorityInput.value = s.priority || "";
-  estimateInput.value = s.estimate || "";
-  assignmentInput.value = s.assigned || "";
-  descriptionInput.value = s.description || "";
-  spikeInput.value = s.spike || "No";
-  statusInput.value = s.status || "Not Ready";
+  await loadAssignmentOptions();
+
+  priorityInput.value = s.priority ?? "";
+  estimateInput.value = s.estimate ?? "";
+  assignmentInput.value = s.assigned ?? "";
+  descriptionInput.value = s.description ?? "";
+  spikeInput.value = s.spike ?? "No";
+  statusInput.value = s.status ?? "Not Ready";
 
   createModal.classList.remove("hidden");
-}
-
-/* ============================================================
-   MOVE TO SPRINT BACKLOG
-   ============================================================ */
-
-async function moveStoryToSprint(storyId) {
-  const ref = doc(db, "projects", projectId, "product-backlog", storyId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return;
-
-  const story = snap.data();
-
-  await addDoc(collection(db, "projects", projectId, "sprint-backlog"), story);
-
-  await deleteDoc(ref);
-
-  loadStories();
 }
 
 /* ============================================================
@@ -320,6 +408,7 @@ sortBtn.onclick = () => {
 sortMenu.addEventListener("click", (e) => {
   const sort = e.target.dataset.sort;
   if (!sort) return;
+
   currentSort = sort;
   sortMenu.classList.add("hidden");
   loadStories();
