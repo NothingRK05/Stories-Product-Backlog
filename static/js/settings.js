@@ -1,12 +1,19 @@
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { showPopup } from "./popup.js";
 
 // Sidebar section switching
 document.addEventListener("DOMContentLoaded", () => {
-  const items = document.querySelectorAll(".sidebar-item");
+  const items    = document.querySelectorAll(".sidebar-item");
   const sections = document.querySelectorAll(".settings-section");
 
   items.forEach(item => {
@@ -18,9 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Theme toggle with localStorage persistence
-  const html = document.documentElement;
+  const html   = document.documentElement;
   const toggle = document.getElementById("settingsThemeToggle");
-  const saved = localStorage.getItem("theme");
+  const saved  = localStorage.getItem("theme");
 
   if (saved) {
     html.setAttribute("data-theme", saved);
@@ -34,28 +41,70 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Load user info and handle display name update
-onAuthStateChanged(auth, (user) => {
+// Load user info and handle username update
+onAuthStateChanged(auth, async (user) => {
   if (!user) return;
 
-  document.getElementById("accountEmail").textContent = user.email;
-  document.getElementById("accountUID").textContent = user.uid;
-  document.getElementById("displayName").textContent = user.displayName || "(none)";
+  // Load current username from Firestore to display accurate stored value
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  const usernameLower = userSnap.exists() ? userSnap.data().usernameLower : "";
+
+  document.getElementById("accountEmail").textContent    = user.email;
+  document.getElementById("accountUID").textContent      = user.uid;
+  document.getElementById("displayName").textContent     = userSnap.exists()
+    ? userSnap.data().usernameRaw || usernameLower
+    : user.displayName || "(none)";
 
   document.getElementById("saveNameBtn").addEventListener("click", async () => {
-    const newName = document.getElementById("newDisplayName").value.trim();
+    const newNameRaw   = document.getElementById("newDisplayName").value.trim();
+    const newNameLower = newNameRaw.toLowerCase();
 
-    if (!newName) {
-      alert("Name cannot be empty.");
+    if (!newNameRaw) {
+      showPopup("Missing Username", "Please enter a new username.");
+      return;
+    }
+
+    if (newNameLower === usernameLower) {
+      showPopup("No Change", "That is already your current username.");
       return;
     }
 
     try {
-      await updateProfile(user, { displayName: newName });
-      document.getElementById("displayName").textContent = newName;
-      alert("Name updated!");
+      // Check if the new username is already taken
+      const newUsernameSnap = await getDoc(doc(db, "usernames", newNameLower));
+      if (newUsernameSnap.exists()) {
+        showPopup("Username Taken", "That username is already taken. Please choose another.");
+        return;
+      }
+
+      // Write new username doc
+      await setDoc(doc(db, "usernames", newNameLower), {
+        uid: user.uid,
+        email: user.email.toLowerCase(),
+        displayName: newNameRaw
+      });
+
+      // Delete old username doc
+      if (usernameLower) {
+        await deleteDoc(doc(db, "usernames", usernameLower));
+      }
+
+      // Update users doc
+      await setDoc(doc(db, "users", user.uid), {
+        displayName:    newNameRaw,
+        usernameRaw:    newNameRaw,
+        usernameLower:  newNameLower
+      }, { merge: true });
+
+      // Update Firebase Auth profile
+      await updateProfile(user, { displayName: newNameRaw });
+
+      document.getElementById("displayName").textContent = newNameRaw;
+      showPopup("Username Updated", `Your username has been changed to "${newNameRaw}".`);
+
     } catch (err) {
-      alert(err.message);
+      console.error(err);
+      showPopup("Update Error", err.message);
     }
   });
 });

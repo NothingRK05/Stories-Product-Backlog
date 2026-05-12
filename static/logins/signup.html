@@ -26,6 +26,15 @@
   </div>
 
   <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/popup.js"></script>
   <script type="module" src="/js/auth-signup.js"></script>
+
+  <div id="customPopup" class="popup-overlay hidden">
+    <div class="popup-box">
+      <h3 id="popupTitle">Notice</h3>
+      <p id="popupMessage"></p>
+      <button id="popupCloseBtn">OK</button>
+    </div>
+  </div>
 </body>
 </html>
