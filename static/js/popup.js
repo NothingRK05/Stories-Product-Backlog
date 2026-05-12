@@ -1,11 +1,9 @@
 export function showPopup(title, message) {
-  const popup = document.getElementById("customPopup");
-  document.getElementById("popupTitle").textContent = title;
-  document.getElementById("popupMessage").textContent = message;
+    document.getElementById("popupTitle").textContent = title;
+    document.getElementById("popupMessage").textContent = message;
+    document.getElementById("customPopup").classList.remove("hidden");
 
-  popup.classList.remove("hidden");
-
-  document.getElementById("popupCloseBtn").onclick = () => {
-    popup.classList.add("hidden");
+    document.getElementById("popupCloseBtn").onclick = () => {
+        document.getElementById("customPopup").classList.add("hidden");
   };
 }

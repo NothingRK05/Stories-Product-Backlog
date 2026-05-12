@@ -1,8 +1,5 @@
 import { auth } from "../js/firebase.js";
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getIncomingShareRequests,
   acceptShareRequest,
@@ -17,23 +14,11 @@ const inboxList = document.getElementById("inboxList");
 let currentUid = null;
 let inboxOpen = false;
 
-/* ============================================================
-   AUTH + INITIAL LOAD
-   ============================================================ */
-
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    currentUid = null;
-    return;
-  }
-
+  if (!user) { currentUid = null; return; }
   currentUid = user.uid;
   await refreshInbox();
 });
-
-/* ============================================================
-   REFRESH INBOX
-   ============================================================ */
 
 async function refreshInbox() {
   if (!currentUid) return;
@@ -53,63 +38,43 @@ async function refreshInbox() {
   requests.forEach((req) => {
     const item = document.createElement("div");
     item.classList.add("inbox-item");
-
     item.innerHTML = `
       <div class="inbox-text">
-        <span><strong>${req.fromName}</strong> wants to share <strong>${req.projectName}</strong></span>
+        <strong>${req.fromName}</strong> wants to share <strong>${req.projectName}</strong>
       </div>
-
       <div class="inbox-actions">
         <button class="btn accept-btn" data-id="${req.id}">Accept</button>
         <button class="btn decline-btn" data-id="${req.id}">Decline</button>
       </div>
     `;
-
     inboxList.appendChild(item);
   });
 }
 
-/* ============================================================
-   TOGGLE INBOX PANEL
-   ============================================================ */
-
+// Toggle inbox panel open/closed
 inboxIcon.onclick = () => {
   inboxOpen = !inboxOpen;
-
-  if (inboxOpen) {
-    inboxPanel.classList.remove("hidden");
-    refreshInbox();
-  } else {
-    inboxPanel.classList.add("hidden");
-  }
+  inboxPanel.classList.toggle("hidden", !inboxOpen);
+  if (inboxOpen) refreshInbox();
 };
 
+// Close inbox when clicking outside
 document.addEventListener("click", (e) => {
   if (!inboxOpen) return;
-
-  const clickedInboxIcon = inboxIcon.contains(e.target);
-  const clickedInboxPanel = inboxPanel.contains(e.target);
-
-  if (!clickedInboxIcon && !clickedInboxPanel) {
+  if (!inboxIcon.contains(e.target) && !inboxPanel.contains(e.target)) {
     inboxPanel.classList.add("hidden");
     inboxOpen = false;
   }
 });
 
-/* ============================================================
-   ACCEPT / DECLINE HANDLERS
-   ============================================================ */
-
+// Accept / decline buttons
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("accept-btn")) {
-    const id = e.target.dataset.id;
-    await acceptShareRequest(id);
-    await refreshInbox();
+    await acceptShareRequest(e.target.dataset.id);
+    // page redirects on accept, no refresh needed
   }
-
   if (e.target.classList.contains("decline-btn")) {
-    const id = e.target.dataset.id;
-    await declineShareRequest(id);
+    await declineShareRequest(e.target.dataset.id);
     await refreshInbox();
   }
 });

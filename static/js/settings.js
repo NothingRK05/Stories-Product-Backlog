@@ -4,9 +4,7 @@ import {
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-/* ---------------------------------------------------------
-   SIDEBAR SWITCHING
---------------------------------------------------------- */
+// Sidebar section switching
 document.addEventListener("DOMContentLoaded", () => {
   const items = document.querySelectorAll(".sidebar-item");
   const sections = document.querySelectorAll(".settings-section");
@@ -15,37 +13,28 @@ document.addEventListener("DOMContentLoaded", () => {
     item.addEventListener("click", () => {
       items.forEach(i => i.classList.remove("active"));
       item.classList.add("active");
-
-      const target = item.dataset.section;
-
-      sections.forEach(sec => {
-        sec.classList.toggle("hidden", sec.id !== target);
-      });
+      sections.forEach(sec => sec.classList.toggle("hidden", sec.id !== item.dataset.section));
     });
   });
 
-  /* ---------------------------------------------------------
-     THEME PERSISTENCE
-  --------------------------------------------------------- */
+  // Theme toggle with localStorage persistence
   const html = document.documentElement;
-  const settingsToggle = document.getElementById("settingsThemeToggle");
+  const toggle = document.getElementById("settingsThemeToggle");
+  const saved = localStorage.getItem("theme");
 
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme) {
-    html.setAttribute("data-theme", savedTheme);
-    settingsToggle.checked = savedTheme === "dark";
+  if (saved) {
+    html.setAttribute("data-theme", saved);
+    toggle.checked = saved === "dark";
   }
 
-  settingsToggle.addEventListener("change", () => {
-    const newTheme = settingsToggle.checked ? "dark" : "light";
-    html.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
+  toggle.addEventListener("change", () => {
+    const theme = toggle.checked ? "dark" : "light";
+    html.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
   });
 });
 
-/* ---------------------------------------------------------
-   LOAD USER INFO + SAVE NAME
---------------------------------------------------------- */
+// Load user info and handle display name update
 onAuthStateChanged(auth, (user) => {
   if (!user) return;
 
@@ -57,15 +46,14 @@ onAuthStateChanged(auth, (user) => {
     const newName = document.getElementById("newDisplayName").value.trim();
 
     if (!newName) {
-      alert("Name cannot be empty");
+      alert("Name cannot be empty.");
       return;
     }
 
     try {
       await updateProfile(user, { displayName: newName });
-      alert("Name updated!");
-
       document.getElementById("displayName").textContent = newName;
+      alert("Name updated!");
     } catch (err) {
       alert(err.message);
     }

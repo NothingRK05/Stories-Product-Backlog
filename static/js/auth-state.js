@@ -11,28 +11,38 @@ export let currentUserInfo = {
   email: null
 };
 
+// Binds logo click — routes to /projects if logged in, / if not
+function bindLogo(loggedIn) {
+  const logo = document.querySelector(".logo");
+  if (!logo) return;
+
+  const clone = logo.cloneNode(true);
+  logo.parentNode.replaceChild(clone, logo);
+
+  clone.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.location.href = loggedIn ? "/projects" : "/";
+  });
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     currentUserInfo = { uid: null, usernameLower: null, displayName: null, email: null };
     if (authArea) authArea.innerHTML = "";
+    bindLogo(false);
     return;
   }
 
-  const uid = user.uid;
-  const userRef = doc(db, "users", uid);
-  const userSnap = await getDoc(userRef);
-
+  const userSnap = await getDoc(doc(db, "users", user.uid));
   if (!userSnap.exists()) {
-    console.error("users/{uid} missing — cannot load usernameLower");
+    console.error("users/{uid} doc missing");
     return;
   }
 
   const usernameLower = userSnap.data().usernameLower;
-  const usernameRef = doc(db, "usernames", usernameLower);
-  const usernameSnap = await getDoc(usernameRef);
-
+  const usernameSnap = await getDoc(doc(db, "usernames", usernameLower));
   if (!usernameSnap.exists()) {
-    console.error("usernames/{usernameLower} missing");
+    console.error("usernames/{usernameLower} doc missing");
     return;
   }
 
@@ -46,6 +56,7 @@ onAuthStateChanged(auth, async (user) => {
   };
 
   window.currentUserInfo = currentUserInfo;
+
   const initial = currentUserInfo.displayName.trim().charAt(0).toUpperCase();
 
   authArea.innerHTML = `
@@ -60,9 +71,7 @@ onAuthStateChanged(auth, async (user) => {
   const profileIcon = document.getElementById("profileIcon");
   const profileMenu = document.getElementById("profileMenu");
 
-  profileIcon.onclick = () => {
-    profileMenu.classList.toggle("show");
-  };
+  profileIcon.onclick = () => profileMenu.classList.toggle("show");
 
   document.addEventListener("click", (e) => {
     if (!profileMenu.contains(e.target) && e.target !== profileIcon) {
@@ -73,13 +82,13 @@ onAuthStateChanged(auth, async (user) => {
   profileMenu.addEventListener("click", async (e) => {
     const action = e.target.dataset.action;
     if (!action) return;
-
     if (action === "projects") window.location.href = "/projects";
     if (action === "settings") window.location.href = "/logins/settings.html";
-
     if (action === "logout") {
       await signOut(auth);
       window.location.href = "/";
     }
   });
+
+  bindLogo(true);
 });
