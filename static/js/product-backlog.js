@@ -17,28 +17,28 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 // DOM
-const storyList        = document.getElementById("storyList");
+const storyList          = document.getElementById("storyList");
 const openCreateModalBtn = document.getElementById("openCreateModal");
-const createModal      = document.getElementById("createModal");
-const closeModalBtn    = document.getElementById("closeModalBtn");
-const saveStoryBtn     = document.getElementById("saveStoryBtn");
-const priorityInput    = document.getElementById("priorityInput");
-const estimateInput    = document.getElementById("estimateInput");
-const assignmentInput  = document.getElementById("assignmentInput");
-const descriptionInput = document.getElementById("descriptionInput");
-const spikeInput       = document.getElementById("spikeInput");
-const statusInput      = document.getElementById("statusInput");
-const deleteModal      = document.getElementById("deleteModal");
-const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-const cancelDeleteBtn  = document.getElementById("cancelDeleteBtn");
-const sortBtn          = document.getElementById("sortBtn");
-const sortMenu         = document.getElementById("sortMenu");
+const createModal        = document.getElementById("createModal");
+const closeModalBtn      = document.getElementById("closeModalBtn");
+const saveStoryBtn       = document.getElementById("saveStoryBtn");
+const priorityInput      = document.getElementById("priorityInput");
+const estimateInput      = document.getElementById("estimateInput");
+const assignmentInput    = document.getElementById("assignmentInput");
+const descriptionInput   = document.getElementById("descriptionInput");
+const spikeInput         = document.getElementById("spikeInput");
+const statusInput        = document.getElementById("statusInput");
+const deleteModal        = document.getElementById("deleteModal");
+const confirmDeleteBtn   = document.getElementById("confirmDeleteBtn");
+const cancelDeleteBtn    = document.getElementById("cancelDeleteBtn");
 
 // State
-let projectId   = null;
-let storyToEdit = null;
+let projectId     = null;
+let storyToEdit   = null;
 let storyToDelete = null;
-let currentSort = "id";
+let cachedStories = [];
+let currentSort   = "id";
+let currentDir    = "asc";
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "/login"; return; }
@@ -70,24 +70,48 @@ async function loadAssignmentOptions() {
 
 async function loadStories() {
   showLoading();
-  storyList.innerHTML = "";
 
   const snap = await getDocs(collection(db, "projects", projectId, "product-backlog"));
-  const stories = snap.docs
+  cachedStories = snap.docs
     .filter(d => d.id !== "_placeholder")
     .map(d => ({ id: d.id, ...d.data() }));
 
-  stories.sort((a, b) => {
-    if (currentSort === "priority") return (a.priority || 0) - (b.priority || 0);
-    if (currentSort === "estimate") return (a.estimate || 0) - (b.estimate || 0);
-    if (currentSort === "status")   return (a.status || "").localeCompare(b.status || "");
-    if (currentSort === "assigned") return (a.assigned || "").localeCompare(b.assigned || "");
-    if (currentSort === "spike")    return (a.spike || "").localeCompare(b.spike || "");
-    return (a.numericId || 0) - (b.numericId || 0);
-  });
-
-  stories.forEach(story => addStoryRow(story.id, story));
+  renderStories();
   hideLoading();
+}
+
+function sortedStories() {
+  const dir = currentDir === "asc" ? 1 : -1;
+  return [...cachedStories].sort((a, b) => {
+    let result = 0;
+    if (currentSort === "priority") result = (a.priority || 0) - (b.priority || 0);
+    else if (currentSort === "estimate") result = (a.estimate || 0) - (b.estimate || 0);
+    else if (currentSort === "status")   result = (a.status || "").localeCompare(b.status || "");
+    else if (currentSort === "assigned") result = (a.assigned || "").localeCompare(b.assigned || "");
+    else if (currentSort === "spike")    result = (a.spike || "").localeCompare(b.spike || "");
+    else result = (a.numericId || 0) - (b.numericId || 0);
+    return result * dir;
+  });
+}
+
+function renderStories() {
+  storyList.innerHTML = "";
+  sortedStories().forEach(story => addStoryRow(story.id, story));
+  updateHeaderIndicators();
+}
+
+function updateHeaderIndicators() {
+  document.querySelectorAll(".story-table th[data-sort]").forEach(th => {
+    const arrow = th.querySelector(".sort-arrow");
+    if (!arrow) return;
+    if (th.dataset.sort === currentSort) {
+      arrow.textContent = currentDir === "asc" ? " ↑" : " ↓";
+      th.classList.add("th-active");
+    } else {
+      arrow.textContent = "";
+      th.classList.remove("th-active");
+    }
+  });
 }
 
 function addStoryRow(id, story) {
@@ -113,6 +137,20 @@ function addStoryRow(id, story) {
   `;
   storyList.appendChild(tr);
 }
+
+// Header click sorting
+document.addEventListener("click", (e) => {
+  const th = e.target.closest("th[data-sort]");
+  if (!th) return;
+  const sort = th.dataset.sort;
+  if (sort === currentSort) {
+    currentDir = currentDir === "asc" ? "desc" : "asc";
+  } else {
+    currentSort = sort;
+    currentDir = "asc";
+  }
+  renderStories();
+});
 
 // Open/close 3-dots menus
 document.addEventListener("click", (e) => {
@@ -147,7 +185,7 @@ async function moveToSprintBacklog(storyId) {
 
   await addDoc(collection(db, "projects", projectId, "sprint-backlog"), snap.data());
   await deleteDoc(ref);
-  loadStories();
+  await loadStories();
 }
 
 // Delete modal
@@ -161,7 +199,7 @@ confirmDeleteBtn.onclick = async () => {
   await deleteDoc(doc(db, "projects", projectId, "product-backlog", storyToDelete));
   storyToDelete = null;
   deleteModal.classList.add("hidden");
-  loadStories();
+  await loadStories();
 };
 
 cancelDeleteBtn.onclick = () => {
@@ -214,7 +252,7 @@ saveStoryBtn.onclick = async () => {
     });
     storyToEdit = null;
     createModal.classList.add("hidden");
-    loadStories();
+    await loadStories();
     return;
   }
 
@@ -229,7 +267,7 @@ saveStoryBtn.onclick = async () => {
   });
 
   createModal.classList.add("hidden");
-  loadStories();
+  await loadStories();
 };
 
 // Edit modal — pre-fill form with existing story data
@@ -250,14 +288,3 @@ async function openEditModal(storyId) {
 
   createModal.classList.remove("hidden");
 }
-
-// Sorting
-sortBtn.onclick = () => sortMenu.classList.toggle("hidden");
-
-sortMenu.addEventListener("click", (e) => {
-  const sort = e.target.dataset.sort;
-  if (!sort) return;
-  currentSort = sort;
-  sortMenu.classList.add("hidden");
-  loadStories();
-});

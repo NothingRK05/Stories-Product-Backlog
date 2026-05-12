@@ -11,15 +11,15 @@ import {
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { showLoading, hideLoading } from "./loading.js";
 
-const storyList       = document.getElementById("storyList");
+const storyList         = document.getElementById("storyList");
 const completeSprintBtn = document.getElementById("completeSprintBtn");
-const sortBtn         = document.getElementById("sortBtn");
-const sortMenu        = document.getElementById("sortMenu");
 
 const projectId = new URLSearchParams(window.location.search).get("project");
 
-let currentUid  = null;
-let currentSort = "id";
+let currentUid    = null;
+let cachedStories = [];
+let currentSort   = "id";
+let currentDir    = "asc";
 
 // Auth check — verify user has access to this project
 onAuthStateChanged(auth, async (user) => {
@@ -48,24 +48,48 @@ onAuthStateChanged(auth, async (user) => {
 
 async function loadStories() {
   showLoading();
-  storyList.innerHTML = "";
 
   const snap = await getDocs(collection(db, "projects", projectId, "sprint-backlog"));
-  const stories = snap.docs
+  cachedStories = snap.docs
     .filter(d => d.id !== "_placeholder")
     .map(d => ({ id: d.id, ...d.data() }));
 
-  stories.sort((a, b) => {
-    if (currentSort === "priority") return (a.priority || 0) - (b.priority || 0);
-    if (currentSort === "estimate") return (a.estimate || 0) - (b.estimate || 0);
-    if (currentSort === "status")   return (a.status || "").localeCompare(b.status || "");
-    if (currentSort === "assigned") return (a.assigned || "").localeCompare(b.assigned || "");
-    if (currentSort === "spike")    return (a.spike || "").localeCompare(b.spike || "");
-    return (a.numericId || 0) - (b.numericId || 0);
-  });
-
-  stories.forEach(addStoryRow);
+  renderStories();
   hideLoading();
+}
+
+function sortedStories() {
+  const dir = currentDir === "asc" ? 1 : -1;
+  return [...cachedStories].sort((a, b) => {
+    let result = 0;
+    if (currentSort === "priority")      result = (a.priority || 0) - (b.priority || 0);
+    else if (currentSort === "estimate") result = (a.estimate || 0) - (b.estimate || 0);
+    else if (currentSort === "status")   result = (a.status || "").localeCompare(b.status || "");
+    else if (currentSort === "assigned") result = (a.assigned || "").localeCompare(b.assigned || "");
+    else if (currentSort === "spike")    result = (a.spike || "").localeCompare(b.spike || "");
+    else result = (a.numericId || 0) - (b.numericId || 0);
+    return result * dir;
+  });
+}
+
+function renderStories() {
+  storyList.innerHTML = "";
+  sortedStories().forEach(addStoryRow);
+  updateHeaderIndicators();
+}
+
+function updateHeaderIndicators() {
+  document.querySelectorAll(".story-table th[data-sort]").forEach(th => {
+    const arrow = th.querySelector(".sort-arrow");
+    if (!arrow) return;
+    if (th.dataset.sort === currentSort) {
+      arrow.textContent = currentDir === "asc" ? " ↑" : " ↓";
+      th.classList.add("th-active");
+    } else {
+      arrow.textContent = "";
+      th.classList.remove("th-active");
+    }
+  });
 }
 
 function addStoryRow(story) {
@@ -92,6 +116,20 @@ function addStoryRow(story) {
 
   storyList.appendChild(tr);
 }
+
+// Header click sorting
+document.addEventListener("click", (e) => {
+  const th = e.target.closest("th[data-sort]");
+  if (!th) return;
+  const sort = th.dataset.sort;
+  if (sort === currentSort) {
+    currentDir = currentDir === "asc" ? "desc" : "asc";
+  } else {
+    currentSort = sort;
+    currentDir = "asc";
+  }
+  renderStories();
+});
 
 // Open/close 3-dots menus
 document.addEventListener("click", (e) => {
@@ -122,7 +160,7 @@ async function toggleReadyState(storyId) {
 
   const newStatus = snap.data().status === "Ready" ? "Not Ready" : "Ready";
   await updateDoc(ref, { status: newStatus });
-  loadStories();
+  await loadStories();
 }
 
 // Complete sprint — delete Ready stories, return Not Ready to product backlog
@@ -144,16 +182,5 @@ completeSprintBtn.onclick = async () => {
   }
 
   hideLoading();
-  loadStories();
+  await loadStories();
 };
-
-// Sorting
-sortBtn.onclick = () => sortMenu.classList.toggle("hidden");
-
-sortMenu.addEventListener("click", (e) => {
-  const sort = e.target.dataset.sort;
-  if (!sort) return;
-  currentSort = sort;
-  sortMenu.classList.add("hidden");
-  loadStories();
-});

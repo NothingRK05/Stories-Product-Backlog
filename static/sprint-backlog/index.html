@@ -32,19 +32,6 @@
 
     <div style="display:flex; justify-content:center; gap:20px; margin-top:25px;">
       <a id="switchProductBtn" class="btn">Switch to Product Backlog</a>
-
-      <div class="sort-container">
-        <button id="sortBtn" class="btn">Sort By</button>
-        <div id="sortMenu" class="sort-menu hidden">
-          <div data-sort="id">ID</div>
-          <div data-sort="priority">Priority</div>
-          <div data-sort="estimate">Estimate</div>
-          <div data-sort="spike">Spike</div>
-          <div data-sort="status">Status</div>
-          <div data-sort="assigned">Assigned Developer</div>
-        </div>
-      </div>
-
       <button id="completeSprintBtn" class="btn">Complete Sprint</button>
     </div>
   </div>
@@ -52,13 +39,13 @@
   <table id="storyTable" class="story-table">
     <thead>
       <tr>
-        <th>ID</th>
+        <th data-sort="id">ID<span class="sort-arrow"> ↑</span></th>
         <th>User Story / Task</th>
-        <th>Priority</th>
-        <th>Estimate</th>
-        <th>Spike</th>
-        <th>Status</th>
-        <th>Assigned</th>
+        <th data-sort="priority">Priority<span class="sort-arrow"></span></th>
+        <th data-sort="estimate">Estimate<span class="sort-arrow"></span></th>
+        <th data-sort="spike">Spike<span class="sort-arrow"></span></th>
+        <th data-sort="status">Status<span class="sort-arrow"></span></th>
+        <th data-sort="assigned">Assigned<span class="sort-arrow"></span></th>
         <th></th>
       </tr>
     </thead>

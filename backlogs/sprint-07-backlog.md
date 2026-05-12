@@ -36,7 +36,7 @@ Sprint 7 Backlog:
 | ST-049 | As a user, I want to create a clickable profile picture that shows my account settings. | 8 | 2 | N | Done | Ricardo |
 | ST-050 | As a user, I want to be able to see which stories are specifically mine in a project sprint backlog. | 7 | 2 | N | Ready | Bobby |
 | ST-022 | As a user, I want to be able to sort by different categories; ID, priority, Spike vs not spike, ready vs not ready, estimation, and the developer. | 9 | 3 | N | Done | Bobby |
-| ST-024 | As a developer, I want to create a way for users to be able to export their product and sprint backlogs to pdfs. | 6 | 2 | N | Done | Bobby |
+| ST-024 | As a developer, I want to create a way for users to be able to export their product and sprint backlogs to pdfs. | 6 | 2 | Y | Done | Bobby |
 | ST-028 | As a user, I want to be able to add unfinished user stories in my sprint backlog back into the product backlog | 6 | 2 | N | Done | Bobby |
 | ST-036 | As a user, I want a welcoming, easy to navigate, and clean looking webpage for my metrics page. | 4 | 2 | N | -- | Angelo |
 | ST-023 | As a user, I want to be able to create different projects so I can have project specific product and sprint backlogs. | 4 | 2 | N | Done | Angelo |

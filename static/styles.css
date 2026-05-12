@@ -394,43 +394,36 @@ html[data-theme="light"] .info-box p {
 }
 
 /* ============================================================
-   SORT MENU
+   SORTABLE TABLE HEADERS
    ============================================================ */
 
-.sort-container {
-  position: relative;
-}
-
-.sort-menu {
-  position: absolute;
-  top: 45px;
-  right: 0;
-  background: #1a1a1a;
-  border: 1px solid #444;
-  border-radius: 6px;
-  width: 190px;
-  z-index: 20;
-  padding: 6px 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-
-html[data-theme="light"] .sort-menu {
-  background: #fff;
-  border-color: #ccc;
-}
-
-.sort-menu div {
-  padding: 10px 14px;
+.story-table th[data-sort] {
   cursor: pointer;
-  color: var(--text-light);
-  font-size: 14px;
-  transition: var(--transition);
+  user-select: none;
+  white-space: nowrap;
 }
 
-.sort-menu div:hover {
-  background: rgba(143, 123, 255, 0.15);
-  color: var(--purple-light);
+.story-table th[data-sort]:hover {
+  color: #fff;
+  background: #222;
+}
+
+html[data-theme="light"] .story-table th[data-sort]:hover {
+  background: #e8e4ff;
+  color: var(--purple);
+}
+
+.story-table th.th-active {
+  color: #fff;
+}
+
+html[data-theme="light"] .story-table th.th-active {
+  color: var(--purple);
+}
+
+.sort-arrow {
+  font-size: 13px;
+  opacity: 0.85;
 }
 
 .hidden {
