@@ -62,11 +62,63 @@
             </div>
         </div>
         <div class="box-right">
-            <h3>Right Box</h3>
-            <p>Your content here</p>
+            <div class="story-actions-cell" style="position: absolute; top: 12px; right: 12px;">
+                <div class="story-menu-wrapper">
+                    <div class="story-menu-icon" id="metricsMenuIcon">⋮</div>
+                    <div class="story-menu hidden" id="metricsMenu">
+                        <div class="story-menu-item" id="editMemberMetricsBtn">Edit Member Data</div>
+                    </div>
+                </div>
+            </div>
+            <h3>Team Metrics</h3>
+            <div style="overflow-x: auto;">
+                <table class="metrics-table" id="metricsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Capacity</th>
+                            <th>St Pts Committed</th>
+                            <th>Hours Worked</th>
+                            <th>St Pts Delivered</th>
+                            <th>Capacity to Effort</th>
+                            <th>Committed to Delivered</th>
+                            <th>Capacity to Delivered</th>
+                            <th>Spike / Non-Spike</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metricsTableBody"></tbody>
+                    <tfoot id="metricsTableFoot"></tfoot>
+                </table>
+            </div>
         </div>
     </div>
 
+    <div id="memberMetricsModal" class="modal hidden">
+        <div class="modal-content story-modal">
+            <h3 id="memberMetricsModalTitle">Edit Member Data</h3>
+    
+            <div class="modal-field">
+                <label>Member</label>
+                <select id="memberSelect"></select>
+            </div>
+    
+            <div class="modal-field">
+                <label>Estimated Capacity (hours)</label>
+                <input type="number" id="capacityInput" min="0" />
+            </div>
+    
+            <div class="modal-field">
+                <label>Hours Worked / Effort</label>
+                <input type="number" id="hoursWorkedInput" min="0" />
+            </div>
+    
+            <div class="modal-buttons">
+                <button id="saveMemberMetricsBtn" class="btn">Save</button>
+                <button id="closeMemberMetricsModalBtn" class="btn cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="teamInfoModal" class="modal hidden">
         <div class="modal-content story-modal">
             <h3>Edit Team Info</h3>

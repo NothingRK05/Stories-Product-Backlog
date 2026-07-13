@@ -30,6 +30,80 @@
     padding: 20px;
     color: var(--text-light);
     min-height: 150px;
+    position: relative;
+}
+
+.metrics-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 16px;
+    font-size: 14px;
+}
+
+.metrics-table th {
+    background: #1a1a1a;
+    color: var(--purple-light);
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    vertical-align: bottom;
+    height: 120px;
+}
+
+.metrics-table th:first-child {
+    writing-mode: horizontal-tb;
+    transform: none;
+    text-align: left;
+    vertical-align: middle;
+    height: auto;
+}
+
+.metrics-table td {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-light);
+    border-bottom: 1px solid #2a2a2a;
+    font-size: 14px;
+}
+
+.metrics-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+}
+
+.metrics-table tfoot td {
+    padding: 12px;
+    text-align: center;
+    color: var(--purple-light);
+    font-weight: 700;
+    border-top: 2px solid var(--border);
+    font-size: 14px;
+}
+
+.metrics-table tfoot td:first-child {
+    text-align: left;
+}
+
+html[data-theme="light"] .metrics-table th {
+    background: #f2f2f2;
+    color: var(--purple);
+}
+
+html[data-theme="light"] .metrics-table td {
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+html[data-theme="light"] .metrics-table tfoot td {
+    color: var(--purple);
+    border-top: 2px solid var(--border);
 }
 .left-column {
     flex: 1;
