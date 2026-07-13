@@ -1,7 +1,9 @@
 import { auth, db } from "./firebase.js";
 import {
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   doc,
@@ -57,5 +59,39 @@ document.querySelector("form").addEventListener("submit", async (e) => {
   } catch (err) {
     console.error(err);
     showPopup("Sign Up Error", err.message);
+  }
+});
+
+document.getElementById("googleSignupBtn").addEventListener("click", async () => {
+  const provider = new GoogleAuthProvider();
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+
+    if (!userSnap.exists()) {
+      const displayName = user.displayName || "User";
+      const usernameLower = displayName.toLowerCase().replace(/\s+/g, "_");
+
+      await setDoc(doc(db, "usernames", usernameLower), {
+        uid: user.uid,
+        email: user.email,
+        displayName
+      });
+
+      await setDoc(doc(db, "users", user.uid), {
+        displayName,
+        usernameRaw: displayName,
+        usernameLower,
+        email: user.email,
+        createdAt: Date.now()
+      }, { merge: true });
+    }
+
+    window.location.href = "/projects";
+  } catch (err) {
+    showPopup("Google Sign Up Error", err.message);
   }
 });

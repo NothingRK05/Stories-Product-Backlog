@@ -770,6 +770,75 @@ html[data-theme="light"] .auth-input {
   opacity: 0.85;
 }
 
+.auth-divider {
+  text-align: center;
+  margin: 16px 0;
+  color: #777;
+  font-size: 13px;
+  position: relative;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  height: 1px;
+  background: #444;
+}
+
+.auth-divider::before {
+  left: 0;
+}
+
+.auth-divider::after {
+  right: 0;
+}
+
+.google-btn {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: var(--transition);
+  margin-bottom: 8px;
+}
+
+.google-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--purple-light);
+}
+
+.google-btn img {
+  width: 20px;
+  height: 20px;
+}
+
+html[data-theme="light"] .google-btn {
+  border-color: #ccc;
+  color: #222;
+}
+
+html[data-theme="light"] .google-btn:hover {
+  background: #f0eeff;
+  border-color: var(--purple);
+}
+
+html[data-theme="light"] .auth-divider::before,
+html[data-theme="light"] .auth-divider::after {
+  background: #ccc;
+}
+
 /* ============================================================
    LOADING OVERLAY
    ============================================================ */
