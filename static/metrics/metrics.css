@@ -2,11 +2,11 @@
     display: flex;
     flex-direction: row;
     /* force horizontal */
-    gap: 15px;
-    padding: 30px;
+    gap: 22px;
+    padding: 40px;
     margin-top: 20px;
-    width: 90%;
-    max-width: 1100px;
+    width: 96%;
+    max-width: 1500px;
     box-sizing: border-box;
     align-self: center;
     /* handle the body's align-items */
@@ -17,9 +17,10 @@
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 28px;
     color: var(--text-light);
-    min-height: 150px;
+    min-height: 210px;
+    font-size: 17px;
 }
 
 .box-right {
@@ -27,9 +28,9 @@
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 28px;
     color: var(--text-light);
-    min-height: 150px;
+    min-height: 210px;
     position: relative;
 }
 
@@ -37,24 +38,24 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin-top: 16px;
-    font-size: 14px;
+    margin-top: 36px;
+    font-size: 17px;
 }
 
 .metrics-table th {
     background: #1a1a1a;
     color: var(--purple-light);
-    padding: 10px 12px;
+    padding: 14px 16px;
     text-align: center;
     border-bottom: 1px solid var(--border);
-    font-size: 13px;
+    font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     white-space: nowrap;
     vertical-align: bottom;
-    height: 120px;
+    height: 220px;
 }
 
 .metrics-table th:first-child {
@@ -66,11 +67,11 @@
 }
 
 .metrics-table td {
-    padding: 12px;
+    padding: 16px;
     text-align: center;
     color: var(--text-light);
     border-bottom: 1px solid #2a2a2a;
-    font-size: 14px;
+    font-size: 17px;
 }
 
 .metrics-table td:first-child {
@@ -79,12 +80,12 @@
 }
 
 .metrics-table tfoot td {
-    padding: 12px;
+    padding: 16px;
     text-align: center;
     color: var(--purple-light);
     font-weight: 700;
     border-top: 2px solid var(--border);
-    font-size: 14px;
+    font-size: 17px;
 }
 
 .metrics-table tfoot td:first-child {
@@ -105,11 +106,19 @@ html[data-theme="light"] .metrics-table tfoot td {
     color: var(--purple);
     border-top: 2px solid var(--border);
 }
+.box-top h3,
+.box-left h3,
+.box-right h3 {
+    font-size: 22px;
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
 .left-column {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 22px;
 }
 
 .box-top {
@@ -117,7 +126,8 @@ html[data-theme="light"] .metrics-table tfoot td {
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 28px;
     color: var(--text-light);
-    min-height: 150px;
+    min-height: 210px;
+    font-size: 17px;
 }
