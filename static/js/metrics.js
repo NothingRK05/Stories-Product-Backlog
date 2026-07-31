@@ -67,7 +67,7 @@ async function loadMemberOptions(selectEl, excludeValue) {
 
     selectEl.innerHTML = `<option value="">Unassigned</option>`;
     members.forEach(name => {
-        if (name === excludeValue) return; // mutual exclusivity
+        //if (name === excludeValue) return; // mutual exclusivity
         selectEl.innerHTML += `<option value="${name}">${name}</option>`;
     });
 }
@@ -119,10 +119,10 @@ saveTeamInfoBtn.addEventListener("click", async () => {
         return;
     }
 
-    if (scrumMaster && scrumMaster === productOwner) {
-        showPopup("Invalid Assignment", "Scrum Master and Product Owner must be different people.");
-        return;
-    }
+    //if (scrumMaster && scrumMaster === productOwner) {
+    //    showPopup("Invalid Assignment", "Scrum Master and Product Owner must be different people.");
+    //    return;
+    //}
 
     const ref = doc(db, "projects", projectId, "metrics", "teamInfo");
     await setDoc(ref, { teamName, sprint, scrumMaster, productOwner });
@@ -131,22 +131,27 @@ saveTeamInfoBtn.addEventListener("click", async () => {
     await loadTeamInfo();
 });
 
-scrumMasterInput.addEventListener("change", async () => {
-    const currentProductOwner = productOwnerInput.value;
-    await loadMemberOptions(productOwnerInput, scrumMasterInput.value);
-    // restore selection if it's still valid
-    if (currentProductOwner !== scrumMasterInput.value) {
-        productOwnerInput.value = currentProductOwner;
-    }
-});
+// If mutual exclusivity is desired, uncomment the following event listeners to 
+// reload the other dropdown when one changes.
+//  This ensures that the same person cannot be selected for both roles.
+// line 70 and 122-125 should be uncommented as well.
 
-productOwnerInput.addEventListener("change", async () => {
-    const currentScrumMaster = scrumMasterInput.value;
-    await loadMemberOptions(scrumMasterInput, productOwnerInput.value);
-    if (currentScrumMaster !== productOwnerInput.value) {
-        scrumMasterInput.value = currentScrumMaster;
-    }
-});
+//scrumMasterInput.addEventListener("change", async () => {
+//    const currentProductOwner = productOwnerInput.value;
+//    await loadMemberOptions(productOwnerInput, scrumMasterInput.value);
+//    // restore selection if it's still valid
+//    if (currentProductOwner !== scrumMasterInput.value) {
+//        productOwnerInput.value = currentProductOwner;
+//    }
+//});
+
+//productOwnerInput.addEventListener("change", async () => {
+//    const currentScrumMaster = scrumMasterInput.value;
+//    await loadMemberOptions(scrumMasterInput, productOwnerInput.value);
+//    if (currentScrumMaster !== productOwnerInput.value) {
+//        scrumMasterInput.value = currentScrumMaster;
+//    }
+//});
 
 // ── Member Metrics ──────────────────────────────────────────
 
@@ -264,7 +269,10 @@ async function loadMemberMetrics() {
             .reduce((sum, s) => sum + (s.estimate || 0), 0);
 
         const spikes = assigned.filter(s => s.spike === "Yes").length;
+        const spikesStoryPoints = assigned.filter(s => s.spike === "Yes").reduce((sum, s) => sum + (s.estimate || 0), 0);
         const nonSpikes = assigned.filter(s => s.spike === "No").length;
+        const storyPoints = storyPointsCommitted; // total story points committed for this member
+        const percentSpikes = storyPoints > 0 ? Math.round((spikesStoryPoints / storyPoints) * 100) : 0;
 
         // Calculated percentages
         const capacityToEffort = estimatedCapacity > 0 ? Math.round((hoursWorked / estimatedCapacity) * 100) : 0;
@@ -281,7 +289,8 @@ async function loadMemberMetrics() {
             committedToDelivered,
             capacityToDelivered,
             spikes,
-            nonSpikes
+            nonSpikes,
+            percentSpikes
         };
     }));
 
@@ -302,7 +311,7 @@ function renderMetricsTable(rows) {
             <td>${r.capacityToEffort}%</td>
             <td>${r.committedToDelivered}%</td>
             <td>${r.capacityToDelivered}%</td>
-            <td>${r.spikes} / ${r.nonSpikes}</td>
+            <td>${r.percentSpikes}%</td>
         `;
         metricsTableBody.appendChild(tr);
     });
@@ -313,14 +322,14 @@ function renderMetricsTable(rows) {
         acc.storyPointsCommitted += r.storyPointsCommitted;
         acc.hoursWorked += r.hoursWorked;
         acc.storyPointsDelivered += r.storyPointsDelivered;
-        acc.spikes += r.spikes;
-        acc.nonSpikes += r.nonSpikes;
+        acc.percentSpikes += r.percentSpikes;
         return acc;
-    }, { estimatedCapacity: 0, storyPointsCommitted: 0, hoursWorked: 0, storyPointsDelivered: 0, spikes: 0, nonSpikes: 0 });
+    }, { estimatedCapacity: 0, storyPointsCommitted: 0, hoursWorked: 0, storyPointsDelivered: 0, percentSpikes: 0 });
 
     const totalCapacityToEffort = totals.estimatedCapacity > 0 ? Math.round((totals.hoursWorked / totals.estimatedCapacity) * 100) : 0;
     const totalCommittedToDelivered = totals.storyPointsCommitted > 0 ? Math.round((totals.storyPointsDelivered / totals.storyPointsCommitted) * 100) : 0;
     const totalCapacityToDelivered = totals.estimatedCapacity > 0 ? Math.round((totals.storyPointsDelivered / totals.estimatedCapacity) * 100) : 0;
+    const totalPercentSpikes = rows.length > 0 ? Math.round(totals.percentSpikes / rows.length) : 0;
 
     metricsTableFoot.innerHTML = `
         <tr>
@@ -332,7 +341,7 @@ function renderMetricsTable(rows) {
             <td>${totalCapacityToEffort}%</td>
             <td>${totalCommittedToDelivered}%</td>
             <td>${totalCapacityToDelivered}%</td>
-            <td>${totals.spikes} / ${totals.nonSpikes}</td>
+            <td>${totalPercentSpikes}%</td>
         </tr>
     `;
 }
