@@ -64,6 +64,34 @@
     </div>
   </div>
 
+  <div id="completeSprintModal" class="modal hidden">
+    <div class="modal-content story-modal">
+      <h3>Complete Sprint</h3>
+      <p style="color: #aaa; font-size: 14px; margin-bottom: 20px;">
+        Review what will happen when you complete this sprint.
+      </p>
+  
+      <div style="margin-bottom: 16px;">
+        <p style="color: var(--purple-light); font-weight: 600; margin-bottom: 8px;">
+          Returning to Product Backlog (<span id="backlogCount">0</span>)
+        </p>
+        <ul id="backlogList" style="margin: 0; padding-left: 18px; color: #ccc; font-size: 14px; line-height: 1.8;"></ul>
+      </div>
+  
+      <div style="margin-bottom: 24px;">
+        <p style="color: #07ac39; font-weight: 600; margin-bottom: 8px;">
+          Stories Completed (<span id="deleteCount">0</span>)
+        </p>
+        <ul id="deleteList" style="margin: 0; padding-left: 18px; color: #ccc; font-size: 14px; line-height: 1.8;"></ul>
+      </div>
+  
+      <div class="modal-buttons">
+        <button id="confirmCompleteSprintBtn" class="btn" style="background: #d9534f;">Confirm Complete</button>
+        <button id="cancelCompleteSprintBtn" class="btn cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="/js/firebase.js"></script>
   <script type="module" src="/js/auth-state.js"></script>
   <script type="module" src="/js/loading.js"></script>

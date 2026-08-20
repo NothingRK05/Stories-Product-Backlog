@@ -62,7 +62,7 @@ onAuthStateChanged(auth, async (user) => {
   authArea.innerHTML = `
     <div class="profile-icon" id="profileIcon">${initial}</div>
     <div class="profile-menu" id="profileMenu">
-      <div class="profile-menu-item" data-action="projects">My Projects</div>
+      <div class="profile-menu-item" data-action="projects">My Products</div>
       <div class="profile-menu-item" data-action="settings">Settings</div>
       <div class="profile-menu-item" data-action="logout">Logout</div>
     </div>

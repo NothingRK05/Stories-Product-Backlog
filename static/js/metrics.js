@@ -3,6 +3,8 @@ import { getFirestore, doc, getDoc, setDoc, getDocs, collection } from "https://
 import { app } from "./firebase.js";
 import { showLoading, hideLoading } from "./loading.js";
 import { showPopup } from "./popup.js";
+import { serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -34,6 +36,7 @@ onAuthStateChanged(auth, async (user) => {
 
     await loadTeamInfo();
     await loadMemberMetrics();
+    await loadSignatures();
 });
 
 async function loadTeamInfo() {
@@ -131,7 +134,7 @@ saveTeamInfoBtn.addEventListener("click", async () => {
     await loadTeamInfo();
 });
 
-// If mutual exclusivity is desired, uncomment the following event listeners to 
+// If mutual exclusivity is desired, uncomment the following event listeners to
 // reload the other dropdown when one changes.
 //  This ensures that the same person cannot be selected for both roles.
 // line 70 and 122-125 should be uncommented as well.
@@ -152,6 +155,226 @@ saveTeamInfoBtn.addEventListener("click", async () => {
 //        scrumMasterInput.value = currentScrumMaster;
 //    }
 //});
+
+// ── Initial & Final Sign-off, view signatures modals ──────────────────────────────
+
+const signMenuIcon = document.getElementById("signMenuIcon");
+const signMenu = document.getElementById("signMenu");
+
+const preSignBtn = document.getElementById("preSignBtn");
+const preSignModal = document.getElementById("preSignModal");
+const closePreSignModalBtn = document.getElementById("closePreSignModalBtn");
+const savePreSignBtn = document.getElementById("savePreSignBtn");
+
+const postSignBtn = document.getElementById("postSignBtn");
+const postSignModal = document.getElementById("postSignModal");
+const closePostSignModalBtn = document.getElementById("closePostSignModalBtn");
+const savePostSignBtn = document.getElementById("savePostSignBtn");
+
+const roleSelect = document.getElementById("roleSelect");
+const signatureInput = document.getElementById("signatureInput");
+const roleSelectPost = document.getElementById("roleSelectPost");
+const signatureInputPost = document.getElementById("signatureInputPost");
+
+const viewSignBtn = document.getElementById("viewSignBtn");
+const viewSignModal = document.getElementById("viewSignModal");
+const closeViewSignModalBtn = document.getElementById("closeViewSignModalBtn");
+
+function clearPreSignModal() {
+    roleSelect.value = "";
+    signatureInput.value = "";
+}
+function clearPostSignModal() {
+    roleSelectPost.value = "";
+    signatureInputPost.value = "";
+}
+
+signMenuIcon.addEventListener("click", (e) => {
+    e.stopPropagation();
+    signMenu.classList.toggle("hidden");
+});
+document.addEventListener("click", (e) => {
+    if (!signMenu.contains(e.target)) signMenu.classList.add("hidden");
+});
+
+preSignBtn.addEventListener("click", async () => {
+    signMenu.classList.add("hidden");
+    preSignModal.classList.remove("hidden");
+});
+closePreSignModalBtn.addEventListener("click", () => {
+    clearPreSignModal();
+    preSignModal.classList.add("hidden");
+});
+
+postSignBtn.addEventListener("click", async () => {
+    signMenu.classList.add("hidden");
+    postSignModal.classList.remove("hidden");
+});
+closePostSignModalBtn.addEventListener("click", () => {
+    clearPostSignModal();
+    postSignModal.classList.add("hidden");
+});
+
+async function loadSignatures() {
+    showLoading();
+    try {
+        const preRef = doc(db, "projects", projectId, "metrics", "preSignatures");
+        const preSnap = await getDoc(preRef);
+
+        const postRef = doc(db, "projects", projectId, "metrics", "postSignatures");
+        const postSnap = await getDoc(postRef);
+
+        if (preSnap.exists()) {
+            const numSignatures = Object.keys(preSnap.data()).length;
+            preSignaturesDisplay.textContent = `${numSignatures} / 2 signatures`;
+        } else {
+            preSignaturesDisplay.textContent = `0 / 2 signatures`;
+        }
+
+        if (postSnap.exists()) {
+            const numSignatures = Object.keys(postSnap.data()).length;
+            postSignaturesDisplay.textContent = `${numSignatures} / 2 signatures`;
+        } else {
+            postSignaturesDisplay.textContent = `0 / 2 signatures`;
+        }
+    } catch (err) {
+        console.error("loadSignatures error:", err);
+        showPopup("Error", err.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+savePreSignBtn.addEventListener("click", async () => {
+    const role = roleSelect.value;
+    const signature = signatureInput.value.trim();
+
+    if (!role || !signature) {
+        showPopup("Missing Information", "Please select a role and enter a signature.");
+        return;
+    }
+
+    try {
+        const ref = doc(db, "projects", projectId, "metrics", "preSignatures");
+        await setDoc(ref, {
+            [role]: {
+                signature,
+                date: serverTimestamp()
+            }
+        }, { merge: true });
+
+        preSignModal.classList.add("hidden");
+        clearPreSignModal();
+        await loadSignatures();
+    } catch (err) {
+        console.error(err);
+        showPopup("Error", err.message);
+    }
+});
+
+savePostSignBtn.addEventListener("click", async () => {
+    const role = roleSelectPost.value;
+    const signature = signatureInputPost.value.trim();
+
+    if (!role || !signature) {
+        showPopup("Missing Information", "Please select a role and enter a signature.");
+        return;
+    }
+
+    try {
+        const ref = doc(db, "projects", projectId, "metrics", "postSignatures");
+        await setDoc(ref, {
+            [role]: {
+                signature,
+                date: serverTimestamp()
+            }
+        }, { merge: true });
+
+        postSignModal.classList.add("hidden");
+        clearPostSignModal();
+        await loadSignatures();
+    } catch (err) {
+        console.error(err);
+        showPopup("Error", err.message);
+    }
+});
+
+viewSignBtn.addEventListener("click", async () => {
+    signMenu.classList.add("hidden");
+    await loadViewSignatures();
+    viewSignModal.classList.remove("hidden");
+});
+
+closeViewSignModalBtn.addEventListener("click", () => {
+    viewSignModal.classList.add("hidden");
+});
+
+async function loadViewSignatures() {
+    const preRef = doc(db, "projects", projectId, "metrics", "preSignatures");
+    const postRef = doc(db, "projects", projectId, "metrics", "postSignatures");
+
+    const [preSnap, postSnap] = await Promise.all([getDoc(preRef), getDoc(postRef)]);
+
+    renderSignatureList("preSignaturesList", preSnap);
+    renderSignatureList("postSignaturesList", postSnap);
+}
+
+function renderSignatureList(containerId, snap) {
+    const container = document.getElementById(containerId);
+
+    if (!snap.exists()) {
+        container.innerHTML = `<p style="color: #777; font-size: 14px;">No signatures yet.</p>`;
+        return;
+    }
+
+    const data = snap.data();
+
+    // Sort by date descending, take 2 most recent
+    const entries = Object.entries(data)
+        .map(([role, val]) => ({ role, ...val }))
+        .filter(entry => entry.signature)
+        .sort((a, b) => {
+            const dateA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+            const dateB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
+            return dateB - dateA;
+        })
+        .slice(0, 2);
+
+    if (entries.length === 0) {
+        container.innerHTML = `<p style="color: #777; font-size: 14px;">No signatures yet.</p>`;
+        return;
+    }
+
+    container.innerHTML = entries.map(entry => {
+        const date = entry.date?.toDate
+            ? entry.date.toDate().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric"
+            })
+            : "No date";
+
+        return `
+            <div style="
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: var(--radius);
+                padding: 12px 16px;
+                font-size: 14px;
+            ">
+                <p style="margin: 0 0 4px; color: var(--purple-light); font-weight: 600; text-transform: capitalize;">
+                    ${entry.role.replace("-", " ")}
+                </p>
+                <p style="margin: 0 0 4px; color: var(--text-light);">
+                    ${entry.signature}
+                </p>
+                <p style="margin: 0; color: #777; font-size: 12px;">
+                ${date}
+                </p>
+            </div>
+        `;
+    }).join("");
+}
 
 // ── Member Metrics ──────────────────────────────────────────
 
@@ -322,14 +545,17 @@ function renderMetricsTable(rows) {
         acc.storyPointsCommitted += r.storyPointsCommitted;
         acc.hoursWorked += r.hoursWorked;
         acc.storyPointsDelivered += r.storyPointsDelivered;
+        acc.spikes += r.spikes;
         acc.percentSpikes += r.percentSpikes;
         return acc;
-    }, { estimatedCapacity: 0, storyPointsCommitted: 0, hoursWorked: 0, storyPointsDelivered: 0, percentSpikes: 0 });
+    }, { estimatedCapacity: 0, storyPointsCommitted: 0, hoursWorked: 0, storyPointsDelivered: 0, percentSpikes: 0, spikes: 0 });
 
     const totalCapacityToEffort = totals.estimatedCapacity > 0 ? Math.round((totals.hoursWorked / totals.estimatedCapacity) * 100) : 0;
     const totalCommittedToDelivered = totals.storyPointsCommitted > 0 ? Math.round((totals.storyPointsDelivered / totals.storyPointsCommitted) * 100) : 0;
     const totalCapacityToDelivered = totals.estimatedCapacity > 0 ? Math.round((totals.storyPointsDelivered / totals.estimatedCapacity) * 100) : 0;
-    const totalPercentSpikes = rows.length > 0 ? Math.round(totals.percentSpikes / rows.length) : 0;
+    
+    const totalSpikes = totals.spikes;
+    const totalPercentSpikes = totals.storyPointsCommitted > 0 ? Math.round((totals.spikes / totals.storyPointsCommitted) * 100) : 0;
 
     metricsTableFoot.innerHTML = `
         <tr>

@@ -6,7 +6,8 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  getDoc
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { showLoading, hideLoading } from "./loading.js";
@@ -164,23 +165,79 @@ async function toggleReadyState(storyId) {
 }
 
 // Complete sprint — delete Ready stories, return Not Ready to product backlog
+let sprintStoriesCache = [];
+
 completeSprintBtn.onclick = async () => {
   showLoading();
 
   const snap = await getDocs(collection(db, "projects", projectId, "sprint-backlog"));
+  sprintStoriesCache = snap.docs
+    .filter(d => d.id !== "_placeholder")
+    .map(d => ({ id: d.id, ...d.data() }));
 
-  for (const d of snap.docs) {
-    if (d.id === "_placeholder") continue;
-    const story = d.data();
-    const ref = doc(db, "projects", projectId, "sprint-backlog", d.id);
+  const returning = sprintStoriesCache.filter(s => s.status !== "Ready");
+  const deleting = sprintStoriesCache.filter(s => s.status === "Ready");
+
+  // Populate returning list
+  const backlogList = document.getElementById("backlogList");
+  const backlogCount = document.getElementById("backlogCount");
+  backlogList.innerHTML = returning.length
+    ? returning.map(s => `<li>#${s.numericId} — ${s.description || "No description"}</li>`).join("")
+    : "<li style='color:#777'>None</li>";
+  backlogCount.textContent = returning.length;
+
+  // Populate deleting list
+  const deleteList = document.getElementById("deleteList");
+  const deleteCount = document.getElementById("deleteCount");
+  deleteList.innerHTML = deleting.length
+    ? deleting.map(s => `<li>#${s.numericId} — ${s.description || "No description"}</li>`).join("")
+    : "<li style='color:#777'>None</li>";
+  deleteCount.textContent = deleting.length;
+
+  hideLoading();
+  document.getElementById("completeSprintModal").classList.remove("hidden");
+};
+
+document.getElementById("cancelCompleteSprintBtn").onclick = () => {
+  document.getElementById("completeSprintModal").classList.add("hidden");
+  sprintStoriesCache = [];
+};
+
+document.getElementById("confirmCompleteSprintBtn").onclick = async () => {
+  showLoading();
+  document.getElementById("completeSprintModal").classList.add("hidden");
+
+  for (const story of sprintStoriesCache) {
+    const ref = doc(db, "projects", projectId, "sprint-backlog", story.id);
 
     if (story.status !== "Ready") {
-      await addDoc(collection(db, "projects", projectId, "product-backlog"), story);
+      const { id, ...storyData } = story;
+      await addDoc(collection(db, "projects", projectId, "product-backlog"), storyData);
     }
 
     await deleteDoc(ref);
   }
 
+  // Reset all member metrics
+  const projectSnap = await getDoc(doc(db, "projects", projectId));
+  if (projectSnap.exists()) {
+    const project = projectSnap.data();
+    const members = [project.owner, ...Object.values(project.sharedWithNames || {})];
+
+    for (const name of members) {
+      if (!name) continue;
+      await setDoc(doc(db, "projects", projectId, "metrics", `member_${name}`), {
+        estimatedCapacity: 0,
+        hoursWorked: 0
+      }, { merge: true });
+    }
+  }
+
+  // Clear signatures
+  await deleteDoc(doc(db, "projects", projectId, "metrics", "preSignatures"));
+  await deleteDoc(doc(db, "projects", projectId, "metrics", "postSignatures"));
+
+  sprintStoriesCache = [];
   hideLoading();
   await loadStories();
 };

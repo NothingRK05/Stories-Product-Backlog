@@ -56,9 +56,21 @@
                 <p><strong>Product Owner:</strong> <span id="productOwnerDisplay">—</span></p>
             </div>
             <div class="box-left">
-                <h3>Signoff Area</h3>
-                <p>Preliminary Signoff</p>
-                <p>Final Signoff</p>
+                <div class="story-actions-cell" style="position: absolute; top: 12px; right: 12px;">
+                    <div class="story-menu-wrapper">
+                        <div class="story-menu-icon" id="signMenuIcon">⋮</div>
+                        <div class="story-menu hidden" id="signMenu">
+                            <div class="story-menu-item" id="preSignBtn">Preliminary Sign-off</div>
+                            <div class="story-menu-item" id="postSignBtn">Final Sign-off</div>
+                            <div class="story-menu-item" id="viewSignBtn">View Signatures</div>
+                        </div>
+                    </div>
+                </div>
+                <h3>Signatures</h3>
+                <p><strong>Preliminary Signoff</strong></p>
+                <p id="preSignaturesDisplay">0 / 2 signatures</p>
+                <p><strong>Final Signoff</strong></p>
+                <p id="postSignaturesDisplay">0 / 2 signatures</p>
             </div>
         </div>
         <div class="box-right">
@@ -78,7 +90,7 @@
                             <th>Name</th>
                             <th>Capacity</th>
                             <th>St Pts Committed</th>
-                            <th>Hours Worked</th>
+                            <th>St Pts Worked</th>
                             <th>St Pts Delivered</th>
                             <th>Capacity to Effort</th>
                             <th>Committed to Delivered</th>
@@ -103,12 +115,12 @@
             </div>
     
             <div class="modal-field">
-                <label>Estimated Capacity (hours)</label>
+                <label>Estimated Capacity</label>
                 <input type="number" id="capacityInput" min="0" />
             </div>
     
             <div class="modal-field">
-                <label>Hours Worked / Effort</label>
+                <label>Story Points Worked / Effort</label>
                 <input type="number" id="hoursWorkedInput" min="0" />
             </div>
     
@@ -150,12 +162,95 @@
         </div>
     </div>
 
+    <div id="preSignModal" class="modal hidden">
+        <div class="modal-content story-modal">
+            <h3>Preliminary Sign-off</h3>
+    
+            <div class="modal-field">
+                <label>Role</label>
+                <select id="roleSelect">
+                    <option value="scrum-master">Scrum Master</option>
+                    <option value="product-owner">Product Owner</option>
+                    <option value="developer">Developer</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>Signature</label>
+                <input type="text" id="signatureInput" />
+            </div>
+            <div class="modal-buttons">
+                <button id="savePreSignBtn" class="btn">Sign</button>
+                <button id="closePreSignModalBtn" class="btn cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="postSignModal" class="modal hidden">
+        <div class="modal-content story-modal">
+            <h3>Final Sign-off</h3>
+    
+            <div class="modal-field">
+                <label>Role</label>
+                <select id="roleSelectPost">
+                    <option value="scrum-master">Scrum Master</option>
+                    <option value="product-owner">Product Owner</option>
+                    <option value="developer">Developer</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>Signature</label>
+                <input type="text" id="signatureInputPost" />
+            </div>
+            <div class="modal-buttons">
+                <button id="savePostSignBtn" class="btn">Sign</button>
+                <button id="closePostSignModalBtn" class="btn cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewSignModal" class="modal hidden">
+        <div class="modal-content story-modal">
+            <h3>Signatures</h3>
+    
+            <div style="margin-bottom: 24px;">
+                <p style="color: var(--purple-light); font-weight: 600; margin-bottom: 12px;">
+                    Preliminary Sign-off
+                </p>
+                <div id="preSignaturesList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: #777; font-size: 14px;">No signatures yet.</p>
+                </div>
+            </div>
+    
+            <div>
+                <p style="color: var(--purple-light); font-weight: 600; margin-bottom: 12px;">
+                    Final Sign-off
+                </p>
+                <div id="postSignaturesList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: #777; font-size: 14px;">No signatures yet.</p>
+                </div>
+            </div>
+    
+            <div class="modal-buttons">
+                <button id="closeViewSignModalBtn" class="btn cancel-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="customPopup" class="popup-overlay hidden">
+        <div class="popup-box">
+            <h3 id="popupTitle">Notice</h3>
+            <p id="popupMessage"></p>
+            <button id="popupCloseBtn">OK</button>
+        </div>
+    </div>
+
     <script type="module" src="/js/firebase.js"></script>
     <script type="module" src="/js/auth-state.js"></script>
     <script type="module" src="/js/loading.js"></script>
     <script type="module" src="/js/inbox.js"></script>
     <script type="module" src="/js/sharing.js"></script>
     <script type="module" src="/js/metrics.js"></script>
+    <script type="module" src="/js/popup.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const projectId = params.get("project");
