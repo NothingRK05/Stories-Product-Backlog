@@ -31,6 +31,9 @@ const statusInput        = document.getElementById("statusInput");
 const deleteModal        = document.getElementById("deleteModal");
 const confirmDeleteBtn   = document.getElementById("confirmDeleteBtn");
 const cancelDeleteBtn    = document.getElementById("cancelDeleteBtn");
+const exportJsonBtn      = document.getElementById("exportJsonBtn");
+const importJsonBtn      = document.getElementById("importJsonBtn");
+const importJsonInput    = document.getElementById("importJsonInput");
 
 // State
 let projectId     = null;
@@ -288,3 +291,126 @@ async function openEditModal(storyId) {
 
   createModal.classList.remove("hidden");
 }
+
+// ── Export JSON ──────────────────────────────────────────────────
+// Downloads every story currently in the product backlog as a .json file.
+// Firestore's internal doc id is left out since Import always creates fresh docs.
+
+exportJsonBtn.onclick = () => {
+  if (!cachedStories.length) {
+    showPopup("Nothing to Export", "The product backlog is empty.");
+    return;
+  }
+
+  const exportPayload = {
+    exportedAt: new Date().toISOString(),
+    projectId,
+    stories: cachedStories.map(s => ({
+      numericId:   s.numericId ?? null,
+      priority:    s.priority ?? 0,
+      estimate:    s.estimate ?? 0,
+      spike:       s.spike ?? "No",
+      status:      s.status ?? "Not Ready",
+      assigned:    s.assigned ?? "Unassigned",
+      description: s.description ?? ""
+    }))
+  };
+
+  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `product-backlog-${projectId}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+// ── Import JSON ──────────────────────────────────────────────────
+// Adds every story in the chosen JSON file to the CURRENT product backlog
+// as new stories (existing stories are left untouched). Accepts either a
+// raw array of story objects, or an object with a "stories" array —
+// i.e. exactly what Export JSON produces.
+
+importJsonBtn.onclick = () => importJsonInput.click();
+
+importJsonInput.onchange = async () => {
+  const file = importJsonInput.files[0];
+  importJsonInput.value = ""; // allow re-selecting the same file later
+  if (!file) return;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch (err) {
+    showPopup("Invalid File", "That file isn't valid JSON.");
+    return;
+  }
+
+  const items = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(parsed?.stories)
+      ? parsed.stories
+      : null;
+
+  if (!items) {
+    showPopup("Invalid Format", 'Expected a JSON array of stories, or an object with a "stories" array.');
+    return;
+  }
+
+  // Validate + normalize each entry. A description is the only hard requirement
+  // (mirrors the validation in saveStoryBtn); everything else falls back to a default.
+  const valid = [];
+  let skipped = 0;
+
+  items.forEach(item => {
+    const description = typeof item?.description === "string" ? item.description.trim() : "";
+    if (!description) { skipped++; return; }
+
+    const priority = Number(item.priority ?? 0);
+    const estimate = Number(item.estimate ?? 0);
+
+    valid.push({
+      description,
+      priority: priority >= 1 && priority <= 10 ? priority : 0,
+      estimate: estimate >= 0 ? estimate : 0,
+      assigned: typeof item.assigned === "string" && item.assigned.trim() ? item.assigned.trim() : "Unassigned",
+      spike:    item.spike === "Yes" ? "Yes" : "No",
+      status:   item.status === "Ready" ? "Ready" : "Not Ready"
+    });
+  });
+
+  if (!valid.length) {
+    showPopup("Nothing to Import", "No valid stories were found in that file. Each story needs at least a description.");
+    return;
+  }
+
+  showLoading();
+
+  // Assign fresh numericIds continuing from the project's latestStoryId counter,
+  // same as manual story creation does.
+  const projectRef  = doc(db, "projects", projectId);
+  const projectSnap = await getDoc(projectRef);
+  let nextId = projectSnap.exists() ? (projectSnap.data().latestStoryId || 0) : 0;
+
+  for (const story of valid) {
+    nextId += 1;
+    await addDoc(collection(db, "projects", projectId, "product-backlog"), {
+      numericId: nextId,
+      ...story
+    });
+  }
+
+  await updateDoc(projectRef, { latestStoryId: nextId });
+
+  hideLoading();
+  await loadStories();
+
+  showPopup(
+    "Import Complete",
+    `Imported ${valid.length} stor${valid.length === 1 ? "y" : "ies"}.` +
+    (skipped > 0 ? ` Skipped ${skipped} invalid entr${skipped === 1 ? "y" : "ies"} (missing description).` : "")
+  );
+};
