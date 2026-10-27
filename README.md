@@ -62,3 +62,5 @@ This project was created for the Lewis University Software Engineering course as
 
 ## Project Goal
 The goal of Stories is to provide Scrum teams with a simple and organized way to manage development tasks and user stories across multiple projects.
+
+Isaac Was here
