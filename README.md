@@ -66,3 +66,4 @@ The goal of Stories is to provide Scrum teams with a simple and organized way to
 Isaac Was here
 Justin Was Here
 Nick Was Here
+Justin Was Here
