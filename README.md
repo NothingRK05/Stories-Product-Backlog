@@ -57,13 +57,12 @@ This project was created for the Lewis University Software Engineering course as
   - Ricardo Salgado
   - Bryce Dannenberg
   - Angelo Fornero
+  - Isaac Joseph
+  - Nick Dahlin
+  - Justin Hobbs
 
 ---
 
 ## Project Goal
 The goal of Stories is to provide Scrum teams with a simple and organized way to manage development tasks and user stories across multiple projects.
 
-Isaac Was here
-Justin Was Here
-Nick Was Here
-Justin Was Here
