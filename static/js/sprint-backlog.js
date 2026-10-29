@@ -159,7 +159,7 @@ async function toggleReadyState(storyId) {
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
 
-  const newStatus = snap.data().status === "Ready" ? "Not Ready" : "Ready";
+  const newStatus = snap.data().status === "Done" ? "Not Done" : "Done";
   await updateDoc(ref, { status: newStatus });
   await loadStories();
 }
