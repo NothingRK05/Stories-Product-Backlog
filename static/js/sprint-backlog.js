@@ -95,7 +95,7 @@ function updateHeaderIndicators() {
 
 function addStoryRow(story) {
   const tr = document.createElement("tr");
-  const toggleLabel = story.status === "Ready" ? "Not Ready" : "Ready";
+  const toggleLabel = story.status === "Done" ? "Not Done" : "Done";
 
   tr.innerHTML = `
     <td>${story.numericId || ""}</td>
