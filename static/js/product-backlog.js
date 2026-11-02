@@ -34,6 +34,7 @@ const cancelDeleteBtn    = document.getElementById("cancelDeleteBtn");
 const exportJsonBtn      = document.getElementById("exportJsonBtn");
 const importJsonBtn      = document.getElementById("importJsonBtn");
 const importJsonInput    = document.getElementById("importJsonInput");
+const exportPdfBtn       = document.getElementById("exportPdfBtn");
 
 // State
 let projectId     = null;
@@ -424,4 +425,80 @@ importJsonInput.onchange = async () => {
     `Imported ${valid.length} stor${valid.length === 1 ? "y" : "ies"}.` +
     (skipped > 0 ? ` Skipped ${skipped} invalid entr${skipped === 1 ? "y" : "ies"} (missing description).` : "")
   );
+};
+
+// ── Export PDF ──────────────────────────────────────────────────
+// Downloads every story currently in the product backlog as a .pdf file.
+
+exportPdfBtn.onclick = async () => {
+  if (!cachedStories.length) {
+    showPopup("Nothing to Export", "The product backlog is empty.");
+    return;
+  }
+
+  // Get the jsPDF library
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  // Get project name
+  const projectSnap = await getDoc(doc(db, "projects", projectId));
+  const projectName = projectSnap.exists()
+    ? projectSnap.data().projectName || "Project"
+    : "Project";
+
+  // PDF heading
+  pdf.setFontSize(20);
+  pdf.text("Product Backlog", 14, 20);
+
+  pdf.setFontSize(12);
+  pdf.text(`Project: ${projectName}`, 14, 30);
+  pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 37);
+
+  // Table data
+  const rows = sortedStories().map(story => [
+    story.numericId || "",
+    story.description || "",
+    story.priority || "",
+    story.estimate ?? "",
+    story.spike || "",
+    story.status || "",
+    story.assigned || "Unassigned"
+  ]);
+
+  // Create PDF table
+  pdf.autoTable({
+    startY: 45,
+    head: [[
+      "ID",
+      "User Story / Task",
+      "Priority",
+      "Story\nPoints",
+      "Spike",
+      "Status",
+      "Assigned"
+    ]],
+    body: rows,
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 3,
+      overflow: "linebreak"
+    },
+    headStyles: {
+      fillColor: [106, 90, 205]
+    },
+    columnStyles: {
+      0: { cellWidth: 12 },
+      1: { cellWidth: 65 },
+      2: { cellWidth: 17 },
+      3: { cellWidth: 17 },
+      4: { cellWidth: 15 },
+      5: { cellWidth: 20 },
+      6: { cellWidth: 35 }
+    },
+    margin: { left: 14, right: 14 }
+  });
+
+  // Download PDF
+  pdf.save(`product-backlog-${projectName.replace(/[^a-z0-9]/gi, "-")}.pdf`);
 };

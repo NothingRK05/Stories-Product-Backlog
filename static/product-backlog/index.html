@@ -37,6 +37,7 @@
       <a id="switchSprintBtn" class="btn">Switch to Sprint Backlog</a>
       <button id="exportJsonBtn" class="btn">Export JSON</button>
       <button id="importJsonBtn" class="btn">Import JSON</button>
+      <button id="exportPdfBtn" class="btn">Export PDF</button>
       <input type="file" id="importJsonInput" accept="application/json,.json" class="hidden" />
     </div>
   </div>
@@ -129,7 +130,11 @@
   <script type="module" src="/js/loading.js"></script>
   <script type="module" src="/js/inbox.js"></script>
   <script type="module" src="/js/sharing.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
   <script type="module" src="/js/product-backlog.js"></script>
+  
+
   <script>
     const params = new URLSearchParams(window.location.search);
     const projectId = params.get("project");
