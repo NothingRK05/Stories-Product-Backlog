@@ -189,6 +189,16 @@ async function moveToSprintBacklog(storyId) {
 
   const story = snap.data();
 
+//Prevent "Not Ready" stories from moving to the sprint backlog
+
+  if (story.status === "Not Ready") {
+    showPopup(
+      "Cannot move story",
+      "This story is marked 'Not Ready' and can't be added to the current sprint backlog. Please mark as 'Ready' to proceed."
+    );
+    return;
+  }
+
   // Prevent unassigned stories from moving to the sprint backlog
   if (!story.assigned || story.assigned.trim() === "" || story.assigned === "Unassigned") {
     showPopup(
