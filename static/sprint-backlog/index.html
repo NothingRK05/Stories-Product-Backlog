@@ -34,7 +34,7 @@
     <div style="display:flex; justify-content:center; gap:20px; margin-top:25px;">
       <a id="switchProductBtn" class="btn">Switch to Product Backlog</a>
       <a id="switchMetricsBtn" class="btn">Switch to Metrics</a>
-      <a id="SwtichTeamNotesBtn"class="btn">Swtich to Team Notes</a>
+      <a id="switchTeamNotesBtn" class="btn">Switch to Team Notes</a>
       <button id="exportPdfBtn" class="btn">Export PDF</button>
       <button id="completeSprintBtn" class="btn">Complete Sprint</button>
     </div>
@@ -110,6 +110,8 @@
       `/product-backlog?project=${projectId}`;
     document.getElementById("switchMetricsBtn").href =
       `/metrics?project=${projectId}`;
+    document.getElementById("switchTeamNotesBtn").href =
+      `/team-notes?project=${encodeURIComponent(projectId)}`;
   </script>
 </body>
 </html>

@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/js/theme.js"></script>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/team-notes/team-notes.css">
+  <title>Team Notes | Stories</title>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">Stories</a>
+    <div class="nav-right">
+      <div id="inboxIcon" class="inbox-icon">
+        🔔 <span id="inboxBadge" class="inbox-badge hidden"></span>
+      </div>
+      <div id="authArea"></div>
+    </div>
+  </header>
+
+  <div id="inboxPanel" class="inbox-panel hidden">
+    <h3>Share Requests</h3>
+    <div id="inboxList" class="inbox-list"></div>
+  </div>
+
+  <main class="notes-container">
+    <h1 class="title">Team Notes</h1>
+    <p id="projectName" class="notes-subtitle">Loading project...</p>
+
+    <nav class="notes-nav">
+      <a id="switchSprintBtn" class="btn">Switch to Sprint Backlog</a>
+      <a id="switchProductBtn" class="btn">Switch to Product Backlog</a>
+      <a id="switchMetricsBtn" class="btn">Switch to Metrics</a>
+      <button id="newNoteBtn" class="btn" disabled>+ Create Note</button>
+    </nav>
+
+    <p id="notesMessage" class="notes-message" role="status"></p>
+    <div id="notesList" class="notes-grid"></div>
+  </main>
+
+  <div id="noteModal" class="notes-dialog hidden">
+    <form id="noteForm" class="notes-dialog-content">
+      <h2 id="noteModalTitle">Create Note</h2>
+
+      <label for="noteTitle">Note Title</label>
+      <input id="noteTitle" maxlength="120" required
+             placeholder="Sprint Planning">
+
+      <label for="noteContent">Team Note</label>
+      <textarea id="noteContent" rows="10" maxlength="20000"
+                required placeholder="Write your notes here..."></textarea>
+
+      <div class="notes-dialog-actions">
+        <button id="cancelNoteBtn" type="button"
+                class="btn cancel-btn">Cancel</button>
+        <button id="saveNoteBtn" type="submit"
+                class="btn">Save Note</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="/js/auth-state.js"></script>
+  <script type="module" src="/js/inbox.js"></script>
+  <script type="module" src="/js/sharing.js"></script>
+  <script type="module" src="/js/team-notes.js"></script>
+</body>
+</html>
