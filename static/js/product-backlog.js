@@ -186,7 +186,18 @@ async function moveToSprintBacklog(storyId) {
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
 
-  await addDoc(collection(db, "projects", projectId, "sprint-backlog"), snap.data());
+  const story = snap.data();
+
+  // Prevent unassigned stories from moving to the sprint backlog
+  if (!story.assigned || story.assigned.trim() === "" || story.assigned === "Unassigned") {
+    showPopup(
+      "Cannot Move Story",
+      "Please assign this story to a team member before moving it to the sprint backlog."
+    );
+    return;
+  }
+
+  await addDoc(collection(db, "projects", projectId, "sprint-backlog"), story);
   await deleteDoc(ref);
   await loadStories();
 }
