@@ -190,7 +190,6 @@ async function moveToSprintBacklog(storyId) {
   const story = snap.data();
 
 //Prevent "Not Ready" stories from moving to the sprint backlog
-
   if (story.status === "Not Ready") {
     showPopup(
       "Cannot move story",
