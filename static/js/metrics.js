@@ -488,7 +488,7 @@ async function loadMemberMetrics() {
         const assigned = stories.filter(s => s.assigned === name);
         const storyPointsCommitted = assigned.reduce((sum, s) => sum + (s.estimate || 0), 0);
         const storyPointsDelivered = assigned
-            .filter(s => s.status === "Ready")
+            .filter(s => s.status === "Done")
             .reduce((sum, s) => sum + (s.estimate || 0), 0);
 
         const spikes = assigned.filter(s => s.spike === "Yes").length;
