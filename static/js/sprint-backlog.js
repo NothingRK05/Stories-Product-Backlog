@@ -154,7 +154,7 @@ document.addEventListener("click", async (e) => {
   if (action === "toggle") await toggleReadyState(id);
 });
 
-// Toggle story between Ready / Not Ready
+// Toggle story between Done / Not Done
 async function toggleReadyState(storyId) {
   const ref = doc(db, "projects", projectId, "sprint-backlog", storyId);
   const snap = await getDoc(ref);
@@ -176,8 +176,8 @@ completeSprintBtn.onclick = async () => {
     .filter(d => d.id !== "_placeholder")
     .map(d => ({ id: d.id, ...d.data() }));
 
-  const returning = sprintStoriesCache.filter(s => s.status !== "Ready");
-  const deleting = sprintStoriesCache.filter(s => s.status === "Ready");
+  const returning = sprintStoriesCache.filter(s => s.status !== "Done");
+  const deleting = sprintStoriesCache.filter(s => s.status === "Done");
 
   // Populate returning list
   const backlogList = document.getElementById("backlogList");
@@ -211,7 +211,7 @@ document.getElementById("confirmCompleteSprintBtn").onclick = async () => {
   for (const story of sprintStoriesCache) {
     const ref = doc(db, "projects", projectId, "sprint-backlog", story.id);
 
-    if (story.status !== "Ready") {
+    if (story.status !== "Done") {
       const { id, ...storyData } = story;
       await addDoc(collection(db, "projects", projectId, "product-backlog"), storyData);
     }
