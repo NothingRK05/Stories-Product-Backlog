@@ -268,7 +268,7 @@ exportPdfBtn.onclick = async () => {
 
   pdf.setFontSize(12);
   pdf.text(`Project: ${projectName}`, 14, 30);
-  pdf.text(`Exported: ${new Date().toLocaleDateString()}`, 14, 37);
+  pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 37);
 
   // Table data
   const rows = sortedStories().map(story => [

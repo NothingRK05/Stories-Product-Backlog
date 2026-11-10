@@ -25,6 +25,7 @@ const teamNameDisplay = document.getElementById("teamNameDisplay");
 const sprintDisplay = document.getElementById("sprintDisplay");
 const scrumMasterDisplay = document.getElementById("scrumMasterDisplay");
 const productOwnerDisplay = document.getElementById("productOwnerDisplay");
+const exportPdfBtn = document.getElementById("exportPdfBtn");
 
 let projectId = null;
 
@@ -571,3 +572,104 @@ function renderMetricsTable(rows) {
         </tr>
     `;
 }
+
+// ── Export Metrics PDF ──────────────────────────────────────────
+
+exportPdfBtn.onclick = async () => {
+    try {
+        // Get the jsPDF library
+        const { jsPDF } = window.jspdf;
+
+        // Create landscape PDF
+        const pdf = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "letter"
+        });
+
+        // PDF heading
+        pdf.setFontSize(20);
+        pdf.text("Team Metrics", 14, 18);
+
+        pdf.setFontSize(10);
+        pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 26);
+
+        // Team information
+        pdf.setFontSize(12);
+        pdf.text(`Team Name: ${teamNameDisplay.textContent}`, 14, 38);
+        pdf.text(`Sprint: ${sprintDisplay.textContent}`, 14, 46);
+
+        pdf.text(`Scrum Master: ${scrumMasterDisplay.textContent}`, 110, 38);
+        pdf.text(`Product Owner: ${productOwnerDisplay.textContent}`, 110, 46);
+
+        // Sign-off information
+        pdf.setFontSize(10);
+        pdf.text(
+            `Preliminary Signoff: ${document.getElementById("preSignaturesDisplay").textContent}`,
+            14,
+            56
+        );
+
+        pdf.text(
+            `Final Signoff: ${document.getElementById("postSignaturesDisplay").textContent}`,
+            110,
+            56
+        );
+
+        // Get metric table headers
+        const headers = Array.from(
+            document.querySelectorAll("#metricsTable thead th")
+        ).map(th => th.textContent.trim());
+
+        // Get individual member metrics
+        const rows = Array.from(
+            metricsTableBody.querySelectorAll("tr")
+        ).map(tr =>
+            Array.from(tr.cells).map(td => td.textContent.trim())
+        );
+
+        // Get team totals
+        const totals = Array.from(
+            metricsTableFoot.querySelectorAll("tr")
+        ).map(tr =>
+            Array.from(tr.cells).map(td => td.textContent.trim())
+        );
+
+        // Create PDF table
+        pdf.autoTable({
+            startY: 65,
+            head: [headers],
+            body: rows,
+            foot: totals,
+            showFoot: "lastPage",
+            theme: "grid",
+            styles: {
+                fontSize: 8,
+                cellPadding: 3,
+                overflow: "linebreak"
+            },
+            headStyles: {
+                fillColor: [106, 90, 205]
+            },
+            footStyles: {
+                fillColor: [230, 230, 230],
+                textColor: [0, 0, 0],
+                fontStyle: "bold"
+            },
+            margin: {
+                left: 14,
+                right: 14
+            }
+        });
+
+        // Download PDF
+        const teamName = teamNameDisplay.textContent || "Team";
+        const fileName = teamName.replace(/[^a-z0-9]/gi, "-");
+
+        pdf.save(`metrics-${fileName}.pdf`);
+
+    } catch (err) {
+        console.error("PDF Export Error:", err);
+        showPopup("Export Error", "Unable to export the metrics PDF.");
+    }
+};

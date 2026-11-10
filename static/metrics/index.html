@@ -36,6 +36,7 @@
 
         <div style="display:flex; justify-content:center; gap:20px; margin-top:25px;">
             <a id="switchSprintBtn" class="btn">Switch to Sprint Backlog</a>
+            <button id="exportPdfBtn" class="btn">Export PDF</button>
         </div>
     </div>
 
@@ -250,6 +251,8 @@
     <script type="module" src="/js/loading.js"></script>
     <script type="module" src="/js/inbox.js"></script>
     <script type="module" src="/js/sharing.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
     <script type="module" src="/js/metrics.js"></script>
     <script type="module" src="/js/popup.js"></script>
     <script>
@@ -258,7 +261,6 @@
         document.getElementById("switchSprintBtn").href =
             `/sprint-backlog?project=${projectId}`;
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 
 </html>
