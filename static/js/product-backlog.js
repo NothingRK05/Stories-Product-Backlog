@@ -189,6 +189,12 @@ async function moveToSprintBacklog(storyId) {
 
   const story = snap.data();
 
+// When a story is moved to the sprint backlog, change it's "Ready" status to "Not Done"
+  if (story.status === "Ready") {
+   story.status = "Not Done";
+}
+
+
 //Prevent "Not Ready" stories from moving to the sprint backlog
   if (story.status === "Not Ready") {
     showPopup(
