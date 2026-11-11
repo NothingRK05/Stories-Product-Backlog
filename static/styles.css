@@ -1185,3 +1185,14 @@ html[data-theme="light"] .settings-section p {
     padding: 9px;
   }
 }
+
+/* Rename Project Button */
+.project-btn.rename {
+  background-color: #8b8b8b;
+  color: white;
+}
+
+.project-btn.rename:hover {
+  background-color: #707070;
+  color: white;
+}
