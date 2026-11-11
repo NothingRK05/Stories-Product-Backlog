@@ -26,6 +26,7 @@ const sprintDisplay = document.getElementById("sprintDisplay");
 const scrumMasterDisplay = document.getElementById("scrumMasterDisplay");
 const productOwnerDisplay = document.getElementById("productOwnerDisplay");
 const exportPdfBtn = document.getElementById("exportPdfBtn");
+const projectNameDisplay = document.getElementById("projectName");
 
 let projectId = null;
 
@@ -468,6 +469,7 @@ async function loadMemberMetrics() {
     if (!projectSnap.exists()) return;
 
     const project = projectSnap.data();
+    projectNameDisplay.textContent = project.projectName || "Team Workspace";
     const members = getMembers(project);
 
     // Load sprint backlog stories

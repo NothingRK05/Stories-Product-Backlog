@@ -21,6 +21,7 @@ const storyList          = document.getElementById("storyList");
 const openCreateModalBtn = document.getElementById("openCreateModal");
 const createModal        = document.getElementById("createModal");
 const closeModalBtn      = document.getElementById("closeModalBtn");
+const projectNameDisplay = document.getElementById("projectName");
 const saveStoryBtn       = document.getElementById("saveStoryBtn");
 const priorityInput      = document.getElementById("priorityInput");
 const estimateInput      = document.getElementById("estimateInput");
@@ -51,6 +52,18 @@ onAuthStateChanged(auth, async (user) => {
 
   projectId = new URLSearchParams(window.location.search).get("project");
   if (!projectId) { showPopup("Error", "No project specified."); return; }
+
+  // Get and display the current project name
+  const projectSnap = await getDoc(doc(db, "projects", projectId));
+
+  if (!projectSnap.exists()) {
+    showPopup("Error", "Project not found.");
+    return;
+  }
+
+  const project = projectSnap.data();
+
+  projectNameDisplay.textContent = project.projectName || "Team Workspace";
 
   await loadStories();
 });

@@ -14,6 +14,7 @@ import { showLoading, hideLoading } from "./loading.js";
 
 const storyList         = document.getElementById("storyList");
 const completeSprintBtn = document.getElementById("completeSprintBtn");
+const projectNameDisplay = document.getElementById("projectName");
 const exportPdfBtn      = document.getElementById("exportPdfBtn");
 const totalStoriesDisplay = document.getElementById("totalStories");
 const totalStoryPointsDisplay = document.getElementById("totalStoryPoints");
@@ -46,6 +47,8 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "/projects";
     return;
   }
+    // Display the current project name
+    projectNameDisplay.textContent = project.projectName || "Team Workspace";
 
   await loadStories();
 });

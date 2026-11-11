@@ -430,6 +430,14 @@ html[data-theme="light"] .story-table th.th-active {
   display: none;
 }
 
+/* Project Name Subtitle */
+.project-subtitle {
+  color: var(--purple-light);
+  text-align: center;
+  margin: 5px 0 28px;
+  font-weight: 600;
+}
+
 /* ============================================================
    BACKLOG TABLE
    ============================================================ */
