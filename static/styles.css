@@ -1139,6 +1139,36 @@ html[data-theme="light"] .settings-section p {
   color: #555;
 }
 
+/* Help - Team Contacts */
+.team-contact {
+  padding: 15px 18px;
+  margin-top: 15px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.team-contact h3 {
+  margin: 0 0 6px 0;
+  color: var(--text-light);
+  font-size: 16px;
+}
+
+.team-contact p {
+  margin: 0;
+}
+
+.team-contact a {
+  color: var(--purple-light);
+  font-size: 14px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.team-contact a:hover {
+  text-decoration: underline;
+}
+
 /* ============================================================
    PRODUCT BACKLOG TOTALS
    ============================================================ */
