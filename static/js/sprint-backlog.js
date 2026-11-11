@@ -15,6 +15,8 @@ import { showLoading, hideLoading } from "./loading.js";
 const storyList         = document.getElementById("storyList");
 const completeSprintBtn = document.getElementById("completeSprintBtn");
 const exportPdfBtn      = document.getElementById("exportPdfBtn");
+const totalStoriesDisplay = document.getElementById("totalStories");
+const totalStoryPointsDisplay = document.getElementById("totalStoryPoints");
 
 const projectId = new URLSearchParams(window.location.search).get("project");
 
@@ -78,6 +80,20 @@ function renderStories() {
   storyList.innerHTML = "";
   sortedStories().forEach(addStoryRow);
   updateHeaderIndicators();
+  updateBacklogTotals();
+}
+
+// Update Sprint Backlog totals
+function updateBacklogTotals() {
+  const totalStories = cachedStories.length;
+
+  const totalStoryPoints = cachedStories.reduce(
+    (total, story) => total + (Number(story.estimate) || 0),
+    0
+  );
+
+  totalStoriesDisplay.textContent = totalStories;
+  totalStoryPointsDisplay.textContent = totalStoryPoints;
 }
 
 function updateHeaderIndicators() {

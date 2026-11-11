@@ -439,7 +439,7 @@ html[data-theme="light"] .story-table th.th-active {
   max-width: 1200px;
   border-collapse: separate;
   border-spacing: 0;
-  margin: 30px auto 80px;
+  margin: 30px auto 20px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1129,4 +1129,51 @@ html[data-theme="light"] .popup-box p {
 
 html[data-theme="light"] .settings-section p {
   color: #555;
+}
+
+/* ============================================================
+   PRODUCT BACKLOG TOTALS
+   ============================================================ */
+
+.backlog-totals {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 15px auto 30px;
+  width: fit-content;
+}
+
+.total-box {
+  width: 150px;
+  text-align: center;
+  padding: 10px 12px;
+  border: 1px solid var(--purple);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  box-sizing: border-box;
+}
+
+.total-box h3 {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 5px;
+  color: var(--text-light);
+}
+
+.total-box p {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--purple-light);
+  margin: 0;
+}
+
+@media (max-width: 400px) {
+  .backlog-totals {
+    gap: 10px;
+  }
+
+  .total-box {
+    width: 135px;
+    padding: 9px;
+  }
 }

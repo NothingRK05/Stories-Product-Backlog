@@ -31,6 +31,8 @@ const statusInput        = document.getElementById("statusInput");
 const deleteModal        = document.getElementById("deleteModal");
 const confirmDeleteBtn   = document.getElementById("confirmDeleteBtn");
 const cancelDeleteBtn    = document.getElementById("cancelDeleteBtn");
+const totalStoriesDisplay = document.getElementById("totalStories");
+const totalStoryPointsDisplay = document.getElementById("totalStoryPoints");
 const exportJsonBtn      = document.getElementById("exportJsonBtn");
 const importJsonBtn      = document.getElementById("importJsonBtn");
 const importJsonInput    = document.getElementById("importJsonInput");
@@ -102,6 +104,20 @@ function renderStories() {
   storyList.innerHTML = "";
   sortedStories().forEach(story => addStoryRow(story.id, story));
   updateHeaderIndicators();
+  updateBacklogTotals();
+}
+
+// Update Product Backlog totals
+function updateBacklogTotals() {
+  const totalStories = cachedStories.length;
+
+  const totalStoryPoints = cachedStories.reduce(
+    (total, story) => total + (Number(story.estimate) || 0),
+    0
+  );
+
+  totalStoriesDisplay.textContent = totalStories;
+  totalStoryPointsDisplay.textContent = totalStoryPoints;
 }
 
 function updateHeaderIndicators() {
