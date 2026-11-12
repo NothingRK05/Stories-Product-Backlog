@@ -61,7 +61,9 @@ onAuthStateChanged(auth, async (user) => {
     // Display the current project name
     projectNameDisplay.textContent = project.projectName || "Team Workspace";
 
-  startRealtimeStories();
+ await loadStories();
+startRealtimeStories();
+});
 
 async function loadStories() {
   showLoading();
@@ -75,6 +77,9 @@ async function loadStories() {
   hideLoading();
 }
 
+
+let unsubscribeStories = null;
+
 function startRealtimeStories() {
   if (unsubscribeStories) {
     unsubscribeStories();
@@ -87,11 +92,9 @@ function startRealtimeStories() {
     "sprint-backlog"
   );
 
-  console.log("Starting Sprint Backlog real-time listener:", projectId);
   unsubscribeStories = onSnapshot(
     storiesRef,
     (snapshot) => {
-      console.log("Live update received:", snapshot.size, "documents");
       cachedStories = snapshot.docs
         .filter(d => d.id !== "_placeholder")
         .map(d => ({
@@ -222,8 +225,10 @@ async function toggleReadyState(storyId) {
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
 
-const newStatus = snap.data().status === "Done" ? "Not Done" : "Done";
-await updateDoc(ref, { status: newStatus });
+  const newStatus = snap.data().status === "Done" ? "Not Done" : "Done";
+  await updateDoc(ref, { status: newStatus });
+  await loadStories();
+}
 
 // Complete sprint — delete Ready stories, return Not Ready to product backlog
 let sprintStoriesCache = [];
@@ -339,6 +344,7 @@ document.getElementById("confirmCompleteSprintBtn").onclick = async () => {
 
   sprintStoriesCache = [];
   hideLoading();
+  await loadStories();
 };
 
 // ── Export PDF ──────────────────────────────────────────────────
