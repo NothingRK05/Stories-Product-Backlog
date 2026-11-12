@@ -39,7 +39,7 @@
       <a id="switchTeamNotesBtn" class="btn">Switch to Team Notes</a>
       <button id="exportPdfBtn" class="btn">Export PDF</button>
       <button id="completeSprintBtn" class="btn">Complete Sprint</button>
-      <button id="sprintHistoryBtn" class="btn" type="button">Sprint History</button>
+      <a id="sprintHistoryBtn" class="btn" href="#">Sprint History</a>
     </div>
   </div>
 
@@ -58,23 +58,6 @@
     </thead>
     <tbody id="storyList"></tbody>
   </table>
-
-
-<!-- Sprint History -->
-<section
-  id="sprintHistorySection"
-  class="container hidden"
-  style="margin-top: 35px; margin-bottom: 35px;"
->
-  <h2 class="title">Sprint History</h2>
-
-  <p class="project-subtitle">
-    View stories completed in previous sprints.
-  </p>
-
-  <div id="sprintHistoryList"></div>
-</section>
-
 
   <!-- Sprint Backlog Totals -->
   <div class="backlog-totals">
@@ -145,6 +128,8 @@
       `/metrics?project=${projectId}`;
     document.getElementById("switchTeamNotesBtn").href =
       `/team-notes?project=${encodeURIComponent(projectId)}`;
+    document.getElementById("sprintHistoryBtn").href =
+      `/sprint-history?project=${encodeURIComponent(projectId)}`;
   </script>
 </body>
 </html>
