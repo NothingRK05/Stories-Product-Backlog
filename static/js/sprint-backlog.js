@@ -7,8 +7,12 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  setDoc,
+  writeBatch,
+  serverTimestamp,
+  query,
+}
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { showLoading, hideLoading } from "./loading.js";
 
@@ -227,16 +231,55 @@ document.getElementById("confirmCompleteSprintBtn").onclick = async () => {
   showLoading();
   document.getElementById("completeSprintModal").classList.add("hidden");
 
+  // Separate completed and unfinished stories
+  const completedStories = sprintStoriesCache.filter(
+    story => story.status === "Done"
+  );
+
+  // Use one batch so archiving and moving stories happen together
+  const batch = writeBatch(db);
+
+  // Save completed stories to the Sprint Archive
+  if (completedStories.length > 0) {
+    const archiveRef = doc(
+      collection(db, "projects", projectId, "sprint-archives")
+    );
+
+    batch.set(archiveRef, {
+      completedAt: serverTimestamp(),
+      completedBy: currentUid,
+      totalStories: completedStories.length,
+      totalStoryPoints: completedStories.reduce(
+        (total, story) => total + (Number(story.estimate) || 0),
+        0
+      ),
+      stories: completedStories
+    });
+  }
+
+  // Return unfinished stories to the product backlog
+  // and remove all stories from the active sprint
   for (const story of sprintStoriesCache) {
-    const ref = doc(db, "projects", projectId, "sprint-backlog", story.id);
+    const sprintRef = doc(
+      db, "projects", projectId, "sprint-backlog", story.id
+    );
 
     if (story.status !== "Done") {
       const { id, ...storyData } = story;
-      await addDoc(collection(db, "projects", projectId, "product-backlog"), storyData);
+
+      const productRef = doc(
+        collection(db, "projects", projectId, "product-backlog")
+      );
+
+      batch.set(productRef, storyData);
     }
 
-    await deleteDoc(ref);
+    batch.delete(sprintRef);
   }
+
+  // Commit all the changes together
+  await batch.commit();
+
 
   // Reset all member metrics
   const projectSnap = await getDoc(doc(db, "projects", projectId));
@@ -337,3 +380,147 @@ exportPdfBtn.onclick = async () => {
   // Download PDF
   pdf.save(`sprint-backlog-${projectName.replace(/[^a-z0-9]/gi, "-")}.pdf`);
 };
+
+ // ── Sprint History ───────────────────────────────────────
+
+const sprintHistoryBtn = document.getElementById("sprintHistoryBtn");
+const sprintHistorySection = document.getElementById("sprintHistorySection");
+const sprintHistoryList = document.getElementById("sprintHistoryList");
+
+// Show or hide sprint history
+sprintHistoryBtn.onclick = async () => {
+  const isHidden = sprintHistorySection.classList.contains("hidden");
+
+  sprintHistorySection.classList.toggle("hidden");
+
+  if (isHidden) {
+    await loadSprintHistory();
+    sprintHistorySection.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+};
+
+// Retrieve completed sprints from Firebase
+async function loadSprintHistory() {
+  sprintHistoryList.textContent = "Loading sprint history...";
+
+  if (!currentUid || !projectId) {
+    sprintHistoryList.textContent = "Please sign in to view sprint history.";
+    return;
+  }
+
+  try {
+    const archiveRef = collection(
+      db,
+      "projects",
+      projectId,
+      "sprint-archives"
+    );
+
+    const snapshot = await getDocs(archiveRef);
+
+    const archives = snapshot.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    // Most recent sprint first
+    archives.sort((a, b) => {
+      const dateA = a.completedAt?.toMillis?.() || 0;
+      const dateB = b.completedAt?.toMillis?.() || 0;
+      return dateB - dateA;
+    });
+
+    sprintHistoryList.replaceChildren();
+
+    if (archives.length === 0) {
+      sprintHistoryList.textContent =
+        "No completed sprints have been archived yet.";
+      return;
+    }
+
+    archives.forEach((archive, index) => {
+      const card = document.createElement("details");
+      card.style.cssText = `
+        background: var(--card-bg, #252530);
+        border: 1px solid #7772;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+      `;
+
+      const date = archive.completedAt?.toDate
+        ? archive.completedAt.toDate().toLocaleString()
+        : "Date unavailable";
+
+      const heading = document.createElement("summary");
+      heading.style.cssText = `
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--purple-light, #8877ff);
+      `;
+
+      heading.textContent =
+        `Archived Sprint ${archives.length - index} — ${date}`;
+
+      card.appendChild(heading);
+
+      const stats = document.createElement("p");
+      stats.style.margin = "15px 0";
+      stats.textContent =
+        `${archive.totalStories || 0} completed stories | ` +
+        `${archive.totalStoryPoints || 0} story points`;
+
+      card.appendChild(stats);
+
+      const table = document.createElement("table");
+      table.className = "story-table";
+      table.style.width = "100%";
+
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+
+      ["ID", "User Story / Task", "Status", "Points", "Assigned"]
+        .forEach(label => {
+          const th = document.createElement("th");
+          th.textContent = label;
+          headerRow.appendChild(th);
+        });
+
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+
+      (archive.stories || []).forEach(story => {
+        const tr = document.createElement("tr");
+
+        [
+          story.numericId ?? "",
+          story.description ?? "",
+          story.status ?? "Done",
+          story.estimate ?? "",
+          story.assigned ?? "Unassigned"
+        ].forEach(value => {
+          const td = document.createElement("td");
+          td.textContent = String(value);
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      card.appendChild(table);
+      sprintHistoryList.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error("Sprint history error:", error);
+    sprintHistoryList.textContent =
+      "Unable to load sprint history. Check Firebase permissions.";
+  }
+}
+
