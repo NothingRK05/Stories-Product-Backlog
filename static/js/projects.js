@@ -21,6 +21,10 @@ import { currentUserInfo } from "./auth-state.js";
 const projectList        = document.getElementById("projectList");
 const createProjectModal = document.getElementById("createProjectModal");
 const deleteProjectModal = document.getElementById("deleteProjectModal");
+const renameProjectModal = document.getElementById("renameProjectModal");
+const renameProjectNameInput = document.getElementById("renameProjectNameInput");
+const saveRenameProjectBtn = document.getElementById("saveRenameProjectBtn");
+const cancelRenameProjectBtn = document.getElementById("cancelRenameProjectBtn");
 const shareProjectModal  = document.getElementById("shareProjectModal");
 const projectNameInput   = document.getElementById("projectNameInput");
 const shareEmailInput    = document.getElementById("shareEmailInput");
@@ -35,6 +39,7 @@ const cancelShareBtn          = document.getElementById("cancelShareBtn");
 let currentUserUid = null;
 let projectToDelete = null;
 let projectToShare  = null;
+let projectToRename = null;
 
 // Load projects on auth
 onAuthStateChanged(auth, async (user) => {
@@ -72,6 +77,7 @@ function addProjectCard(projectId, name, isOwner, ownerName) {
     <div class="project-actions">
       ${isOwner
         ? `<button class="project-btn share">Share</button>
+           <button class="project-btn rename">Rename</button>
            <button class="project-btn delete">Delete</button>`
         : `<button class="project-btn leave">Leave Project</button>`
       }
@@ -87,6 +93,14 @@ function addProjectCard(projectId, name, isOwner, ownerName) {
     projectToShare = projectId;
     shareEmailInput.value = "";
     shareProjectModal.classList.remove("hidden");
+  });
+
+  card.querySelector(".rename")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    projectToRename = projectId;
+    renameProjectNameInput.value = name;
+    renameProjectModal.classList.remove("hidden");
   });
 
   card.querySelector(".delete")?.addEventListener("click", (e) => {
@@ -190,3 +204,29 @@ saveProjectBtn.onclick = async () => {
   createProjectModal.classList.add("hidden");
   loadProjects();
 };
+
+// Rename project modal
+  cancelRenameProjectBtn.onclick = () => {
+    projectToRename = null;
+    renameProjectModal.classList.add("hidden");
+  };
+
+  saveRenameProjectBtn.onclick = async () => {
+    if (!projectToRename) return;
+
+    const newName = renameProjectNameInput.value.trim();
+
+    if (!newName) {
+      showPopup("Invalid Name", "Please enter a product name.");
+      return;
+    }
+
+    await updateDoc(doc(db, "projects", projectToRename), {
+      projectName: newName
+    });
+
+    renameProjectModal.classList.add("hidden");
+    projectToRename = null;
+
+    await loadProjects();
+  };

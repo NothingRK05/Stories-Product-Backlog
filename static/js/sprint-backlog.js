@@ -14,7 +14,10 @@ import { showLoading, hideLoading } from "./loading.js";
 
 const storyList         = document.getElementById("storyList");
 const completeSprintBtn = document.getElementById("completeSprintBtn");
+const projectNameDisplay = document.getElementById("projectName");
 const exportPdfBtn      = document.getElementById("exportPdfBtn");
+const totalStoriesDisplay = document.getElementById("totalStories");
+const totalStoryPointsDisplay = document.getElementById("totalStoryPoints");
 
 const projectId = new URLSearchParams(window.location.search).get("project");
 
@@ -44,6 +47,8 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "/projects";
     return;
   }
+    // Display the current project name
+    projectNameDisplay.textContent = project.projectName || "Team Workspace";
 
   await loadStories();
 });
@@ -78,6 +83,20 @@ function renderStories() {
   storyList.innerHTML = "";
   sortedStories().forEach(addStoryRow);
   updateHeaderIndicators();
+  updateBacklogTotals();
+}
+
+// Update Sprint Backlog totals
+function updateBacklogTotals() {
+  const totalStories = cachedStories.length;
+
+  const totalStoryPoints = cachedStories.reduce(
+    (total, story) => total + (Number(story.estimate) || 0),
+    0
+  );
+
+  totalStoriesDisplay.textContent = totalStories;
+  totalStoryPointsDisplay.textContent = totalStoryPoints;
 }
 
 function updateHeaderIndicators() {
@@ -268,7 +287,7 @@ exportPdfBtn.onclick = async () => {
 
   pdf.setFontSize(12);
   pdf.text(`Project: ${projectName}`, 14, 30);
-  pdf.text(`Exported: ${new Date().toLocaleDateString()}`, 14, 37);
+  pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 37);
 
   // Table data
   const rows = sortedStories().map(story => [

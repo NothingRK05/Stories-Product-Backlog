@@ -21,6 +21,7 @@ const storyList          = document.getElementById("storyList");
 const openCreateModalBtn = document.getElementById("openCreateModal");
 const createModal        = document.getElementById("createModal");
 const closeModalBtn      = document.getElementById("closeModalBtn");
+const projectNameDisplay = document.getElementById("projectName");
 const saveStoryBtn       = document.getElementById("saveStoryBtn");
 const priorityInput      = document.getElementById("priorityInput");
 const estimateInput      = document.getElementById("estimateInput");
@@ -31,6 +32,8 @@ const statusInput        = document.getElementById("statusInput");
 const deleteModal        = document.getElementById("deleteModal");
 const confirmDeleteBtn   = document.getElementById("confirmDeleteBtn");
 const cancelDeleteBtn    = document.getElementById("cancelDeleteBtn");
+const totalStoriesDisplay = document.getElementById("totalStories");
+const totalStoryPointsDisplay = document.getElementById("totalStoryPoints");
 const exportJsonBtn      = document.getElementById("exportJsonBtn");
 const importJsonBtn      = document.getElementById("importJsonBtn");
 const importJsonInput    = document.getElementById("importJsonInput");
@@ -49,6 +52,18 @@ onAuthStateChanged(auth, async (user) => {
 
   projectId = new URLSearchParams(window.location.search).get("project");
   if (!projectId) { showPopup("Error", "No project specified."); return; }
+
+  // Get and display the current project name
+  const projectSnap = await getDoc(doc(db, "projects", projectId));
+
+  if (!projectSnap.exists()) {
+    showPopup("Error", "Project not found.");
+    return;
+  }
+
+  const project = projectSnap.data();
+
+  projectNameDisplay.textContent = project.projectName || "Team Workspace";
 
   await loadStories();
 });
@@ -102,6 +117,20 @@ function renderStories() {
   storyList.innerHTML = "";
   sortedStories().forEach(story => addStoryRow(story.id, story));
   updateHeaderIndicators();
+  updateBacklogTotals();
+}
+
+// Update Product Backlog totals
+function updateBacklogTotals() {
+  const totalStories = cachedStories.length;
+
+  const totalStoryPoints = cachedStories.reduce(
+    (total, story) => total + (Number(story.estimate) || 0),
+    0
+  );
+
+  totalStoriesDisplay.textContent = totalStories;
+  totalStoryPointsDisplay.textContent = totalStoryPoints;
 }
 
 function updateHeaderIndicators() {

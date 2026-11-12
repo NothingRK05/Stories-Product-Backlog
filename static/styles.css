@@ -430,6 +430,14 @@ html[data-theme="light"] .story-table th.th-active {
   display: none;
 }
 
+/* Project Name Subtitle */
+.project-subtitle {
+  color: var(--purple-light);
+  text-align: center;
+  margin: 5px 0 28px;
+  font-weight: 600;
+}
+
 /* ============================================================
    BACKLOG TABLE
    ============================================================ */
@@ -439,7 +447,7 @@ html[data-theme="light"] .story-table th.th-active {
   max-width: 1200px;
   border-collapse: separate;
   border-spacing: 0;
-  margin: 30px auto 80px;
+  margin: 30px auto 20px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1129,4 +1137,92 @@ html[data-theme="light"] .popup-box p {
 
 html[data-theme="light"] .settings-section p {
   color: #555;
+}
+
+/* Help - Team Contacts */
+.team-contact {
+  padding: 15px 18px;
+  margin-top: 15px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.team-contact h3 {
+  margin: 0 0 6px 0;
+  color: var(--text-light);
+  font-size: 16px;
+}
+
+.team-contact p {
+  margin: 0;
+}
+
+.team-contact a {
+  color: var(--purple-light);
+  font-size: 14px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.team-contact a:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   PRODUCT BACKLOG TOTALS
+   ============================================================ */
+
+.backlog-totals {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 15px auto 30px;
+  width: fit-content;
+}
+
+.total-box {
+  width: 150px;
+  text-align: center;
+  padding: 10px 12px;
+  border: 1px solid var(--purple);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  box-sizing: border-box;
+}
+
+.total-box h3 {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 5px;
+  color: var(--text-light);
+}
+
+.total-box p {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--purple-light);
+  margin: 0;
+}
+
+@media (max-width: 400px) {
+  .backlog-totals {
+    gap: 10px;
+  }
+
+  .total-box {
+    width: 135px;
+    padding: 9px;
+  }
+}
+
+/* Rename Project Button */
+.project-btn.rename {
+  background-color: #8b8b8b;
+  color: white;
+}
+
+.project-btn.rename:hover {
+  background-color: #707070;
+  color: white;
 }
