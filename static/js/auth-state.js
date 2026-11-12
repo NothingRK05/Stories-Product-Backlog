@@ -85,9 +85,10 @@ onAuthStateChanged(auth, async (user) => {
     if (action === "projects") window.location.href = "/projects";
     if (action === "settings") window.location.href = "/logins/settings.html";
     if (action === "logout") {
-      await signOut(auth);
-      window.location.href = "/";
-    }
+        await signOut(auth);
+        window.location.replace("/");
+}
+
   });
 
   bindLogo(true);

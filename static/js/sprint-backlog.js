@@ -11,6 +11,7 @@ import {
   writeBatch,
   serverTimestamp,
   query,
+  onSnapshot,
 }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -29,9 +30,15 @@ let currentUid    = null;
 let cachedStories = [];
 let currentSort   = "id";
 let currentDir    = "asc";
-
+let unsubscribeStories = null;
 // Auth check — verify user has access to this project
 onAuthStateChanged(auth, async (user) => {
+
+  if (unsubscribeStories) {
+    unsubscribeStories();
+    unsubscribeStories = null;
+  }
+
   if (!user || !projectId) return;
   currentUid = user.uid;
 
@@ -54,8 +61,7 @@ onAuthStateChanged(auth, async (user) => {
     // Display the current project name
     projectNameDisplay.textContent = project.projectName || "Team Workspace";
 
-  await loadStories();
-});
+  startRealtimeStories();
 
 async function loadStories() {
   showLoading();
@@ -68,6 +74,39 @@ async function loadStories() {
   renderStories();
   hideLoading();
 }
+
+function startRealtimeStories() {
+  if (unsubscribeStories) {
+    unsubscribeStories();
+  }
+
+  const storiesRef = collection(
+    db,
+    "projects",
+    projectId,
+    "sprint-backlog"
+  );
+
+  console.log("Starting Sprint Backlog real-time listener:", projectId);
+  unsubscribeStories = onSnapshot(
+    storiesRef,
+    (snapshot) => {
+      console.log("Live update received:", snapshot.size, "documents");
+      cachedStories = snapshot.docs
+        .filter(d => d.id !== "_placeholder")
+        .map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+
+      renderStories();
+    },
+    (error) => {
+      console.error("Real-time update failed:", error);
+    }
+  );
+}
+
 
 function sortedStories() {
   const dir = currentDir === "asc" ? 1 : -1;
@@ -183,10 +222,8 @@ async function toggleReadyState(storyId) {
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
 
-  const newStatus = snap.data().status === "Done" ? "Not Done" : "Done";
-  await updateDoc(ref, { status: newStatus });
-  await loadStories();
-}
+const newStatus = snap.data().status === "Done" ? "Not Done" : "Done";
+await updateDoc(ref, { status: newStatus });
 
 // Complete sprint — delete Ready stories, return Not Ready to product backlog
 let sprintStoriesCache = [];
@@ -302,7 +339,6 @@ document.getElementById("confirmCompleteSprintBtn").onclick = async () => {
 
   sprintStoriesCache = [];
   hideLoading();
-  await loadStories();
 };
 
 // ── Export PDF ──────────────────────────────────────────────────
