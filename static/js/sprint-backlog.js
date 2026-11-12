@@ -77,9 +77,6 @@ async function loadStories() {
   hideLoading();
 }
 
-
-let unsubscribeStories = null;
-
 function startRealtimeStories() {
   if (unsubscribeStories) {
     unsubscribeStories();
