@@ -1070,17 +1070,6 @@ html[data-theme="light"] .popup-box p {
   margin-bottom: 12px;
 }
 
-.project-row:nth-child(even) {
-  background: var(--bg-panel-alt);
-}
-
-:root {
-  --bg-panel: #515151;
-  --bg-panel-alt: #f2f2f2;
-}
-
-
-
 /* ============================================================
    SETTINGS PAGE
    ============================================================ */
