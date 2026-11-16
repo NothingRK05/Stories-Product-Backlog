@@ -1074,6 +1074,13 @@ html[data-theme="light"] .popup-box p {
   background: var(--bg-panel-alt);
 }
 
+:root {
+  --bg-panel: #515151;
+  --bg-panel-alt: #f2f2f2;
+}
+
+
+
 /* ============================================================
    SETTINGS PAGE
    ============================================================ */
