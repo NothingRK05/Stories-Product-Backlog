@@ -1226,3 +1226,136 @@ html[data-theme="light"] .settings-section p {
   background-color: #707070;
   color: white;
 }
+
+/* Navigation Menu */
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.hamburger {
+    background: transparent;
+    border: none;
+    color: var(--purple-light);
+    font-size: 28px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+}
+
+.hamburger:hover {
+    background: rgba(143, 123, 255, 0.15);
+}
+
+.navigation-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 240px;
+    min-height: calc(100dvh - 85px);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    box-sizing: border-box;
+    box-shadow: 4px 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.navigation-menu a {
+    display: block;
+    padding: 14px 18px;
+    margin-bottom: 6px;
+    color: var(--text-light);
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.navigation-menu a:hover {
+    background: var(--purple);
+    color: white;
+}
+/* Expanded Hamburger Navigation */
+
+.navigation-menu {
+    width: min(270px, 90vw);
+    min-height: 0;
+    height: calc(100dvh - 85px);
+    overflow-y: auto;
+}
+
+.navigation-menu h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-light);
+    opacity: 0.55;
+    margin: 18px 14px 10px;
+}
+
+.navigation-menu hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 16px 8px;
+}
+
+.navigation-menu a,
+.navigation-menu button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: transparent;
+    color: var(--text-light);
+    border: none;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    text-align: left;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.navigation-menu a:hover,
+.navigation-menu button:hover,
+.navigation-menu a.active {
+    background: var(--purple);
+    color: white;
+}
+
+.navigation-menu button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.navigation-menu[hidden] {
+    display: none;
+}
+
+/* Navigation Icons */
+
+.navigation-menu a,
+.navigation-menu button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.navigation-menu svg {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    stroke-width: 1.8;
+    color: var(--purple-light);
+}
+
+.navigation-menu a:hover svg,
+.navigation-menu button:hover svg,
+.navigation-menu a.active svg {
+    color: white;
+}
