@@ -509,6 +509,12 @@ html[data-theme="light"] .story-table td {
   background: rgba(143, 123, 255, 0.07);
 }
 
+/* Zebra striping for better readability */
+tr:nth-child(even) {
+  background-color: #CFCFCF; 
+}
+
+
 /* ============================================================
    STORY ACTIONS (3-DOTS MENU)
    ============================================================ */
