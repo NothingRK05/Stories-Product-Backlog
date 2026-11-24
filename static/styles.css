@@ -511,7 +511,7 @@ html[data-theme="light"] .story-table td {
 
 /* Zebra striping for better readability */
 tr:nth-child(even) {
-  background-color: #CFCFCF; 
+  background-color: #565656; 
 }
 
 
