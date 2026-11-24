@@ -192,5 +192,72 @@ menu.querySelectorAll("a, button").forEach(item => {
     }
 });
 
+// Desktop header navigation
+const desktopNav = document.createElement("nav");
+desktopNav.className = "desktop-nav";
+desktopNav.setAttribute("aria-label", "Quick navigation");
+
+nav.after(desktopNav);
+
+const shortcuts = projectId
+    ? [
+        ...projectNav.querySelectorAll("a"),
+        ...actions.querySelectorAll("button")
+    ]
+    : [
+        ...menu.querySelectorAll("a"),
+        ...actions.querySelectorAll("button")
+    ];
+
+shortcuts.forEach(original => {
+    const shortcut = original.cloneNode(true);
+
+    shortcut.removeAttribute("id");
+    shortcut.className = "header-shortcut";
+
+    if (original.classList.contains("active")) {
+        shortcut.classList.add("active");
+    }
+
+    desktopNav.appendChild(shortcut);
+    
+    if (original.tagName === "BUTTON") {
+        shortcut.type = "button";
+
+        shortcut.addEventListener("click", () => {
+            original.click();
+        });
+    }
+
+    const sync = () => {
+        if (original.tagName === "BUTTON") {
+            shortcut.disabled = original.disabled;
+        }
+
+        if (original.tagName === "A") {
+            shortcut.href = original.href;
+        }
+
+        shortcut.hidden =
+            original.hidden ||
+            original.classList.contains("hidden") ||
+            original.style.display === "none";
+    };
+
+    sync();
+
+    new MutationObserver(sync).observe(original, {
+        attributes: true,
+        attributeFilter: [
+            "disabled",
+            "href",
+            "hidden",
+            "class",
+            "style"
+        ]
+    });
+});
+
+setMenu(false);
 window.lucide?.createIcons();
 })();
