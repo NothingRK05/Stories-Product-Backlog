@@ -1446,3 +1446,23 @@ html[data-theme="light"] .settings-section p {
     display: none !important;
 }
 
+/* Fix hamburger button clickable area */
+
+#menuToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+}
+
+#menuToggle svg,
+#menuToggle i {
+    pointer-events: none;
+    width: 24px;
+    height: 24px;
+}

@@ -138,7 +138,8 @@
         button.setAttribute("aria-expanded", open);
     }
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
         setMenu(menu.hidden);
     });
 
@@ -220,7 +221,7 @@ shortcuts.forEach(original => {
     }
 
     desktopNav.appendChild(shortcut);
-    
+
     if (original.tagName === "BUTTON") {
         shortcut.type = "button";
 
